@@ -277,7 +277,7 @@
       grid-template-columns: 340px 1fr 360px;
       /* ⭐ Row 1 视觉规范化重构：
          移除 align-items: start,回归 Grid 默认 stretch(隐式),
-         三栏容器级统一 480px 钉高,顶/底自然齐平,
+         三栏容器级统一 460px 钉高,顶/底自然齐平,
          配合下方 .top-section > .card / .todo-home-widget-card 的 !important 规则生效 */
     }
     /* Row 2：待办提示模块移走后，时间轴通栏独占 100% 宽度 */
@@ -301,8 +301,8 @@
       min-width: 0;
     }
 
-    /* ⭐⭐⭐ Row 1 视觉规范化重构：容器级 480px 钉高 ⭐⭐⭐
-       作用范围:Row 1 内三张卡(待办/网络/日历)统一 480px,
+    /* ⭐⭐⭐ Row 1 视觉规范化重构：容器级 460px 钉高 ⭐⭐⭐
+       作用范围:Row 1 内三张卡(待办/网络/日历)统一 460px,
        顶部/底部像素级齐平,不受内容高度影响。
        - !important 必加:.todo-home-widget-card 基类有 height: var(--row2-card-height),
          .top-section > .todo-home-widget-card 历史 override 有 height: auto,
@@ -311,34 +311,34 @@
        - box-sizing: border-box 已在全局 * 规则中设定,这里不再重复。*/
     .top-section > .card,
     .top-section > .todo-home-widget-card {
-      height: 480px !important;
-      max-height: 480px !important;
+      height: 460px !important;
+      max-height: 460px !important;
     }
 
-    /* ⭐ Row 1 网络图卡片：把 380px 设计硬保底【优雅包含】在 480px 容器中
+    /* ⭐ Row 1 网络图卡片：把 360px 视觉保底【优雅包含】在 460px 容器中
        原 .network-diagram { min-height: 380px } 在 line 569 是设计契约,不删;
        但 @media (min-width: 1201px) 会把 min-height 顶到 400px(撑爆 480),
        @media (max-width: 1200px) 会压到 340px(底部留白 47px)。
-       这里用更高特异性的 .top-section .network-diagram 把它锁回 380,
+       这里用更高特异性的 .top-section .network-diagram 把它锁回 360,
        让图表既不被挤压变形、也不会把容器撑爆。
        与之配合,body 上下 padding 从 20+24=44 收窄到 18+23=41,让出 3px 给图表作安全冗余。*/
     .top-section .network-diagram {
-      min-height: 380px;
+      min-height: 360px;
     }
     .top-section .network-card .card-body {
       padding: 18px 28px 23px;
     }
 
-    /* ⭐ Row 1 日历卡片：自然高度 449~508px 不等,统一收口在 480
+    /* ⭐ Row 1 日历卡片：自然高度 449~508px 不等,统一收口在 460
        媒体查询会把 cal-day min-height 顶到 48px(1201+)造成溢出,
        也在 Row 1 范围内把它锁回 42px,保持与中屏一致、避免裁切图例。
-       body 上下 padding 从 16+16=32 撑到 16+41=57,自然填满 480。*/
+       body 底部 padding 保持紧凑,减少图例下方空余。*/
     .top-section .cal-day {
       min-height: 42px;
       padding-top: 4px;
     }
     .top-section .calendar-card .card-body {
-      padding: 16px 14px 41px;
+      padding: 16px 14px;
     }
 
     /* ===== NEW MODULE: 待办公告任务提示卡 =====
@@ -383,12 +383,13 @@
       gap: 8px;
     }
     .todo-widget-more {
-      font-size: 12px;
-      font-weight: 400;
+      font-size: 13px;
+      font-weight: 500;
       color: #8c8c8c;
       text-decoration: none;
       cursor: pointer;
       letter-spacing: 0.1px;
+      padding: 2px 0;
       transition: color 0.18s ease;
     }
     .todo-widget-more:hover {
@@ -450,7 +451,7 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;  /* 右对齐,卡片风 */
-      gap: 8px;
+      gap: 6px;
       height: 28px;
       padding: 0 12px;
       flex-shrink: 0;
@@ -459,31 +460,87 @@
       line-height: 1;
       color: #9ca3af;  /* gray-400:低于任务标题,与"查看全部"形成主次 */
       user-select: none;
+      position: relative;
     }
     .todo-page-nav {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 18px;
-      height: 18px;
+      min-width: 22px;
+      height: 22px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 18px;
       line-height: 1;
-      color: #9ca3af;
+      color: #333;
       transition: color 0.15s;
     }
     .todo-page-nav:hover:not(.is-disabled) {
-      color: var(--primary);  /* hover 时轻微高亮 */
+      color: #1677ff;
     }
     .todo-page-nav.is-disabled {
       color: #d1d5db;  /* gray-300:更弱 */
       cursor: not-allowed;
     }
-    .todo-page-text {
-      color: #9ca3af;
-      min-width: 36px;
+    .todo-page-list {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+    .todo-page-btn,
+    .todo-page-ellipsis {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-feature-settings: "tnum";
+    }
+    .todo-page-btn {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #333;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+    }
+    .todo-page-btn:hover {
+      color: #1677ff;
+    }
+    .todo-page-btn.active {
+      border-color: #1677ff;
+      color: #1677ff;
+      font-weight: 600;
+      background: #fff;
+    }
+    .todo-page-ellipsis {
+      color: #bfbfbf;
+      cursor: default;
+    }
+    .todo-page-jump {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #333;
+      white-space: nowrap;
+    }
+    .todo-page-input {
+      width: 34px;
+      height: 24px;
+      padding: 0 4px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      color: #6b7280;
+      font-size: 13px;
       text-align: center;
-      font-feature-settings: "tnum";  /* 数字等宽,翻页时不抖动 */
+      outline: none;
+      font-feature-settings: "tnum";
+    }
+    .todo-page-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.12);
     }
 
     /* ─── 行样式基础态 ─── */
@@ -1777,8 +1834,8 @@
          右侧卡片仍走 var(--row2-card-height) 钉高,任务多时内部滚动。 */
     }
     @media (min-width: 1201px) {
-      .calendar-card {
-        margin-top: 8px;
+      .top-section > .calendar-card {
+        margin-top: 0;
       }
       .network-card .card-body {
         padding-top: 18px;
@@ -1862,7 +1919,7 @@
       <div data-page-node-id="newModuleNoticeReminder" class="todo-home-widget-card">
         <div class="todo-widget-header">
           <div class="todo-widget-title">🔔 待办公告任务提示</div>
-          <a class="todo-widget-more" href="./todo-list-management.html?status=pending">查看全部 ›</a>
+          <a class="todo-widget-more" href="./todo-list-management.html?status=pending">more ›</a>
         </div>
         <div class="todo-widget-summary-bar">
           <div class="todo-stat" id="todo-tab-all" data-tab="all">
@@ -1878,8 +1935,9 @@
         <div class="todo-widget-list-body" id="todo-widget-list"></div>
         <div class="todo-widget-pagination">
           <span class="todo-page-nav is-disabled" id="todoPagePrev" title="上一页">‹</span>
-          <span class="todo-page-text" id="todoPageText">1 / 1</span>
+          <div class="todo-page-list" id="todoPageList" aria-label="页码"></div>
           <span class="todo-page-nav is-disabled" id="todoPageNext" title="下一页">›</span>
+          <label class="todo-page-jump">到 <input class="todo-page-input" id="todoPageJump" type="text" inputmode="numeric" aria-label="跳转页码"> 页</label>
         </div>
       </div>
 
@@ -3123,22 +3181,65 @@
     /* 分页状态：current 当前页(从 1 开始),size 每页条数,totalPages 总页数 */
     var todoPagination = { current: 1, size: 5, totalPages: 1 };
 
+    function getTodoPageItems(current, total) {
+      if (total <= 7) {
+        var all = [];
+        for (var i = 1; i <= total; i++) all.push(i);
+        return all;
+      }
+      var items = [1];
+      var start = Math.max(2, current - 2);
+      var end = Math.min(total - 1, current + 2);
+      if (start > 2) items.push('...');
+      for (var page = start; page <= end; page++) items.push(page);
+      if (end < total - 1) items.push('...');
+      items.push(total);
+      return items;
+    }
+
+    function renderTodoPageList() {
+      var listEl = document.getElementById('todoPageList');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      getTodoPageItems(todoPagination.current, todoPagination.totalPages).forEach(function(item) {
+        if (item === '...') {
+          var ellipsis = document.createElement('span');
+          ellipsis.className = 'todo-page-ellipsis';
+          ellipsis.textContent = '...';
+          listEl.appendChild(ellipsis);
+          return;
+        }
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'todo-page-btn' + (item === todoPagination.current ? ' active' : '');
+        btn.dataset.page = String(item);
+        btn.textContent = String(item);
+        btn.setAttribute('aria-label', '第 ' + item + ' 页');
+        listEl.appendChild(btn);
+      });
+    }
+
     function updateTodoPaginationUI() {
-      var textEl = document.getElementById('todoPageText');
       var prevEl = document.getElementById('todoPagePrev');
       var nextEl = document.getElementById('todoPageNext');
-      if (textEl) textEl.innerText = todoPagination.current + ' / ' + todoPagination.totalPages;
+      var jumpEl = document.getElementById('todoPageJump');
       if (prevEl) {
         prevEl.classList.toggle('is-disabled', todoPagination.current <= 1);
       }
       if (nextEl) {
         nextEl.classList.toggle('is-disabled', todoPagination.current >= todoPagination.totalPages);
       }
+      if (jumpEl) {
+        jumpEl.placeholder = String(todoPagination.current);
+      }
+      renderTodoPageList();
     }
 
     function bindTodoPagination() {
       var prevEl = document.getElementById('todoPagePrev');
       var nextEl = document.getElementById('todoPageNext');
+      var jumpEl = document.getElementById('todoPageJump');
+      var listEl = document.getElementById('todoPageList');
       if (prevEl) {
         prevEl.addEventListener('click', function() {
           if (todoPagination.current > 1) {
@@ -3155,6 +3256,28 @@
           }
         });
       }
+      if (listEl) {
+        listEl.addEventListener('click', function(e) {
+          var btn = e.target.closest('.todo-page-btn');
+          if (!btn) return;
+          todoPagination.current = Number(btn.dataset.page);
+          refreshTodoCard();
+        });
+      }
+      if (jumpEl) {
+        jumpEl.addEventListener('keydown', function(e) {
+          if (e.key !== 'Enter') return;
+          var target = Number(jumpEl.value);
+          if (!Number.isInteger(target) || target < 1 || target > todoPagination.totalPages) {
+            jumpEl.value = '';
+            jumpEl.placeholder = '1-' + todoPagination.totalPages;
+            return;
+          }
+          todoPagination.current = target;
+          jumpEl.value = '';
+          refreshTodoCard();
+        });
+      }
     }
 
     function refreshTodoCard() {
@@ -3165,12 +3288,20 @@
 
       var today = getToday();
       var views = getAllTasks()
-        .filter(function(task) { return task && task.status === 'pending'; })
+        .filter(function(task) {
+          return task && ['pending', 'editing'].includes(task.status);
+        })
         .sort(function(a, b) {
+          var aDiff = diffDays(a.noticeDate, today);
+          var bDiff = diffDays(b.noticeDate, today);
+          if (aDiff === null && bDiff !== null) return -1;
+          if (aDiff !== null && bDiff === null) return 1;
+          if (aDiff !== null && bDiff !== null && aDiff !== bDiff) return aDiff - bDiff;
+
           var aTime = Date.parse((a.generatedAt || '').replace(' ', 'T'));
           var bTime = Date.parse((b.generatedAt || '').replace(' ', 'T'));
-          if (bTime !== aTime) return bTime - aTime;
-          return String(b.id).localeCompare(String(a.id));
+          if (aTime !== bTime) return aTime - bTime;
+          return String(a.id).localeCompare(String(b.id));
         })
         .map(function(task) { return mapToCardView(task, today); });
 
