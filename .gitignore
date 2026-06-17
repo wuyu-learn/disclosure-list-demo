@@ -1,0 +1,28 @@
+# ===== 操作系统垃圾 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# ===== 编辑器 / IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== 日志 / 临时文件 =====
+*.log
+*.tmp
+*.bak
+
+# ===== Node / 包管理（防御性,即使本项目未用） =====
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ===== 系统隐藏文件（防止父目录误追踪） =====
+.*.sw[a-z]
+._*

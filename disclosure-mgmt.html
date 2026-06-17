@@ -1,0 +1,3245 @@
+<!--pnid:pOMrQz3h8sRB5Jm3CJ4Q8p--><!DOCTYPE html><!--pnid:b7HpkZIozhBSEFd2qJcaYC-->
+<html data-page-node-id="WrQuwH2BpWtWHtGDb2nu53" lang="zh-CN"><!--pnid:Kmr1sSOxdCFMvxuOT4puZ8-->
+<head data-page-node-id="7GySOGZBUMl85OR3eKDliJ"><!--pnid:YCd3uGPHDojnr5SNW6FSc7-->
+<script data-page-node-id="DesKzDuMVnEPRRfhSqrfRE" src="/smartpage_comm/inject.js"></script><!--pnid:EZgniujflHsi8qr7B0Q9B6-->
+  <meta data-page-node-id="R1Zm5pMSX8Qf50J9c4Xbae" charset="UTF-8"><!--pnid:7DJocl0SUuEPCSx8D8SGze-->
+  <meta data-page-node-id="vTTPIWutFVSrEuhbF7peER" content="width=device-width, initial-scale=1.0" name="viewport"><!--pnid:9AnbPeHEAClm5WPCROsc7v-->
+  <title data-page-node-id="Q9JCiN0eiItKIiC3Q4UGR6" data-pnid-children="zTXSqMwzj7IONB1yVSz0XV">信披与报告管理平台</title><!--pnid:Ee72MTaWIimL8fzFsR7Jpt-->
+  <style data-page-node-id="iH1NWE8CHwj0yNgs4VC6f0" data-pnid-children="ARGZGNzgG8id8o8gVSJvSp">
+    /* ===== CSS Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body {
+      font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      min-height: 100vh;
+    }
+    a { text-decoration: none; color: inherit; }
+    ul { list-style: none; }
+
+    /* ===== CSS Variables ===== */
+    :root {
+      --primary: #f5a623;
+      --primary-dark: #e8941a;
+      --primary-light: #fff8ed;
+      --bg-nav: #1a2a4a;
+      --bg-nav-hover: #243556;
+      --text-nav: #c8d4e8;
+      --border: #e4e8f0;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      --radius: 8px;
+      --radius-sm: 4px;
+      --tag-blue: #1890ff;
+      --tag-green: #52c41a;
+      --tag-orange: #fa8c16;
+      --tag-red: #f5222d;
+      --tag-purple: #722ed1;
+      --tag-cyan: #13c2c2;
+      /* 第二行右列宽度（与第一行日历列保持像素级一致） */
+      --right-col-width: 360px;
+      /* 行内卡片间距 */
+      --section-gap: 16px;
+      /* ===== Row 2 卡片高度源（信披重点事项 ↔ 待办公告任务提示） =====
+         高度以【左侧 .card.timeline-section 的自然高度】为唯一基准:
+           .card-header         ≈ 14 + 22 + 14 + 1(border) ≈ 51px
+           .timeline-horizontal-scroll  硬编码 320px
+           → 左侧自然撑开总高 ≈ 370~380px
+         取 380px 让两侧【像素级等高 + 1~2px 视觉缓冲】。
+         右侧 .todo-home-widget-card 强制卡此高度后,
+         其内部 .todo-widget-list-body 的
+           flex: 1; min-height: 0; overflow-y: auto;
+         滚动条机制才能被正确激活(任务变多时走内部滚动,
+         不再撑大宿主,Row 2 也不会再"长短脚")。*/
+      --row2-card-height: 380px;
+    }
+
+    /* ===== TOP NAVIGATION =====
+       ⚠️ 关键修复:sticky 必须放在 <header> 上,不能放在 .top-nav 上。
+       原因:.top-nav 的 containing block 是外层 <header>,而 <header> 高度
+       收缩为 56px(= nav 自身高度),sticky 可用滚动区间 = 56 - 56 = 0px,
+       一旦超过 56px 整个 header 会被滚出视口,nav 跟着消失。
+       把 sticky 提升到 <header> 后,containing block 变为 <body>(整页高),
+       sticky 区间 = 整页可滚动范围,nav 才能稳稳钉在顶部。 */
+    .top-nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .top-nav {
+      display: flex;
+      align-items: center;
+      background: #2b3d54;
+      height: 56px;
+      padding: 0 20px;
+      /* left/right/width 100% 防御性 full-bleed:即便父容器宽度异常,
+         顶栏也能铺满整宽、不会左右留缝。z-index 1000 压过所有卡片/
+         弹层(reminder-popover=200、schedule-modal=300 等)。 */
+      position: relative;
+      left: 0;
+      right: 0;
+      width: 100%;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      /* 吸顶过渡:滚动时阴影/背景平滑切换 */
+      transition: box-shadow 0.25s ease, background-color 0.25s ease,
+                  backdrop-filter 0.25s ease, -webkit-backdrop-filter 0.25s ease,
+                  border-color 0.25s ease;
+    }
+    /* 滚动后:阴影 + 背景半透明 + 背后内容微模糊,营造"浮起"层次感 */
+    .top-nav.is-scrolled {
+      background: rgba(43, 61, 84, 0.86);
+      -webkit-backdrop-filter: saturate(160%) blur(10px);
+      backdrop-filter: saturate(160%) blur(10px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+    /* 不支持 backdrop-filter 的浏览器回退为纯加深 */
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .top-nav.is-scrolled { background: #243549; }
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-right: 20px;
+      margin-right: 12px;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .nav-logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #d4a351;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(212, 163, 81, 0.35);
+    }
+    .nav-logo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .nav-logo-text .main-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #d4a351;
+      line-height: 1.2;
+      letter-spacing: 0.5px;
+    }
+    .nav-logo-text .sub-title {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.2;
+      letter-spacing: 0.3px;
+    }
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      padding: 0 12px;
+      gap: 0;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .nav-menu::-webkit-scrollbar { display: none; }
+    .nav-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: color 0.2s;
+      position: relative;
+      flex-shrink: 0;
+      text-decoration: none;
+      border-bottom: none;
+    }
+    .nav-menu-item .menu-icon {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+    .nav-menu-item:hover {
+      color: #fff;
+    }
+    .nav-menu-item.active {
+      color: #fff;
+      text-decoration: none;
+      border-bottom: none;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-left: 16px;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #d4a351;
+      font-size: 13px;
+      cursor: default;
+      transition: color 0.2s;
+    }
+    .user-info:hover { color: #fff; }
+    .user-info .user-icon {
+      font-size: 14px;
+    }
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #d4a351;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .action-btn:hover { color: #fff; }
+    .action-btn .action-icon {
+      font-size: 14px;
+    }
+
+    /* ===== MAIN LAYOUT ===== */
+    .page-wrapper {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* ===== SECTION CARD ===== */
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+    .card-title-icon {
+      width: 22px;
+      height: 22px;
+      background: var(--primary);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #fff;
+    }
+    .card-body { padding: 20px; }
+
+    /* ===== TWO-COL SECTION (第一行 / 第二行 共用分栏) ===== */
+    /* .top-section 作为历史别名,与 .two-col-section 共享同一套规则,
+       未来如需彻底替换,可将 .top-section 单独抽出。*/
+    .top-section,
+    .two-col-section {
+      display: grid;
+      grid-template-columns: 1fr var(--right-col-width, 360px);
+      gap: var(--section-gap, 16px);
+    }
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ Row 1 首屏黄金动线重构：三栏平衡布局
+       左 340px：待办公告任务提示（第一视觉落点）
+       中 1fr  ：信披数据网络（自适应缩放）
+       右 360px：产品任务日历（固定宽度）
+       ═══════════════════════════════════════════════════════════ */
+    .top-section.two-col-section {
+      grid-template-columns: 340px 1fr 360px;
+      /* ⭐ Row 1 视觉规范化重构：
+         移除 align-items: start,回归 Grid 默认 stretch(隐式),
+         三栏容器级统一 480px 钉高,顶/底自然齐平,
+         配合下方 .top-section > .card / .todo-home-widget-card 的 !important 规则生效 */
+    }
+    /* Row 2：待办提示模块移走后，时间轴通栏独占 100% 宽度 */
+    .two-col-section:not(.top-section) {
+      display: block;
+      width: 100%;
+    }
+    /* Grid item 防护:默认 min-width: auto 会让 1fr 列被内部
+       .timeline-content / .timeline-item-card(280px) 撑爆,
+       这里强制让所有 .two-col-section 下的卡片可被压缩,
+       多余内容走 timeline-horizontal-scroll 的横向滚动。 */
+    .two-col-section > .card,
+    .two-col-section > aside,
+    .two-col-section > .todo-home-widget-card {
+      min-width: 0;
+    }
+    /* Row 1 左侧 todo widget：min-width 防护 + 让位给统一的 480px 钉高
+       (已移除 align-self: start / height: auto / max-height: none,
+        现在走下方 .top-section > .card, .top-section > .todo-home-widget-card 的 !important 规则) */
+    .top-section > .todo-home-widget-card {
+      min-width: 0;
+    }
+
+    /* ⭐⭐⭐ Row 1 视觉规范化重构：容器级 480px 钉高 ⭐⭐⭐
+       作用范围:Row 1 内三张卡(待办/网络/日历)统一 480px,
+       顶部/底部像素级齐平,不受内容高度影响。
+       - !important 必加:.todo-home-widget-card 基类有 height: var(--row2-card-height),
+         .top-section > .todo-home-widget-card 历史 override 有 height: auto,
+         没有 !important 会被这些旧规则覆盖。
+       - max-height 同步钉死,防止 flex 子项把容器撑高。
+       - box-sizing: border-box 已在全局 * 规则中设定,这里不再重复。*/
+    .top-section > .card,
+    .top-section > .todo-home-widget-card {
+      height: 480px !important;
+      max-height: 480px !important;
+    }
+
+    /* ⭐ Row 1 网络图卡片：把 380px 设计硬保底【优雅包含】在 480px 容器中
+       原 .network-diagram { min-height: 380px } 在 line 569 是设计契约,不删;
+       但 @media (min-width: 1201px) 会把 min-height 顶到 400px(撑爆 480),
+       @media (max-width: 1200px) 会压到 340px(底部留白 47px)。
+       这里用更高特异性的 .top-section .network-diagram 把它锁回 380,
+       让图表既不被挤压变形、也不会把容器撑爆。
+       与之配合,body 上下 padding 从 20+24=44 收窄到 18+23=41,让出 3px 给图表作安全冗余。*/
+    .top-section .network-diagram {
+      min-height: 380px;
+    }
+    .top-section .network-card .card-body {
+      padding: 18px 28px 23px;
+    }
+
+    /* ⭐ Row 1 日历卡片：自然高度 449~508px 不等,统一收口在 480
+       媒体查询会把 cal-day min-height 顶到 48px(1201+)造成溢出,
+       也在 Row 1 范围内把它锁回 42px,保持与中屏一致、避免裁切图例。
+       body 上下 padding 从 16+16=32 撑到 16+41=57,自然填满 480。*/
+    .top-section .cal-day {
+      min-height: 42px;
+      padding-top: 4px;
+    }
+    .top-section .calendar-card .card-body {
+      padding: 16px 14px 41px;
+    }
+
+    /* ===== NEW MODULE: 待办公告任务提示卡 =====
+       高度不再依赖 grid row 的 max-content 跟随(那会被任务列表无限撑高),
+       而是由 .todo-home-widget-card 内部的 var(--row2-card-height) 强钉死,
+       与左侧 .timeline-section 的自然高度【像素级等高】。
+       align-self: stretch 仍保留,作为"与左侧顶部对齐"的兜底。
+       注意：Row 2 场景（历史）保留 row2-card-height 钉高；
+       Row 1 场景通过 .top-section > .todo-home-widget-card 覆写为 auto。*/
+    .two-col-section:not(.top-section) > .todo-home-widget-card {
+      align-self: stretch;
+    }
+    .todo-home-widget-card {
+      width: 100%;
+      /* 关键:废弃原 height: 100% 的"虚指"(其目标 grid cell 是 auto,
+         解析失败,导致 flex 子项无法触发滚动)。改为与高度源变量强绑定。*/
+      height: var(--row2-card-height);
+      max-height: var(--row2-card-height);
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #f0f0f0;
+      box-sizing: border-box;
+    }
+    .todo-widget-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .todo-widget-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .todo-widget-more {
+      font-size: 12px;
+      font-weight: 400;
+      color: #8c8c8c;
+      text-decoration: none;
+      cursor: pointer;
+      letter-spacing: 0.1px;
+      transition: color 0.18s ease;
+    }
+    .todo-widget-more:hover {
+      color: #1890ff;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-color: rgba(24, 144, 255, 0.5);
+    }
+    .todo-widget-summary-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
+      flex-shrink: 0;
+    }
+    .todo-stat {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      cursor: default;
+    }
+    .todo-stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+    .todo-stat-num {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1f2937;
+      line-height: 1.2;
+      letter-spacing: -0.3px;
+    }
+    .todo-stat-expire .todo-stat-num { color: #dc2626; }
+    .todo-stat-sep {
+      color: #d1d5db;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .todo-widget-list-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 12px 8px;
+      min-height: 0;
+    }
+    /* scrollbar — 极细、低调 */
+    .todo-widget-list-body::-webkit-scrollbar { width: 4px; }
+    .todo-widget-list-body::-webkit-scrollbar-thumb {
+      background: #e5e7eb;
+      border-radius: 2px;
+    }
+    .todo-widget-list-body::-webkit-scrollbar-track { background: transparent; }
+
+    /* ===== TODO 分页器容器(轻量级 Dashboard 卡片风格) ===== */
+    .todo-widget-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;  /* 右对齐,卡片风 */
+      gap: 8px;
+      height: 28px;
+      padding: 0 12px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      font-size: 12px;
+      line-height: 1;
+      color: #9ca3af;  /* gray-400:低于任务标题,与"查看全部"形成主次 */
+      user-select: none;
+    }
+    .todo-page-nav {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      color: #9ca3af;
+      transition: color 0.15s;
+    }
+    .todo-page-nav:hover:not(.is-disabled) {
+      color: var(--primary);  /* hover 时轻微高亮 */
+    }
+    .todo-page-nav.is-disabled {
+      color: #d1d5db;  /* gray-300:更弱 */
+      cursor: not-allowed;
+    }
+    .todo-page-text {
+      color: #9ca3af;
+      min-width: 36px;
+      text-align: center;
+      font-feature-settings: "tnum";  /* 数字等宽,翻页时不抖动 */
+    }
+
+    /* ─── 行样式基础态 ─── */
+    .todo-task-item {
+      padding: 12px 4px 12px 10px;
+      margin-bottom: 0;
+      background: transparent;
+      border: none;
+      border-left: 3px solid transparent; /* 默认透明占位，高危行激活 */
+      border-bottom: 1px solid #f3f4f6;   /* 行分割线 */
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      box-shadow: none;
+      cursor: default;
+      transition: background 0.15s ease;
+    }
+    /* 最后一行去掉底分割线，防止与容器底边重叠 */
+    .todo-task-item:last-child {
+      border-bottom: none;
+    }
+    /* hover：极轻底色，无位移无阴影，纯阅读列表保持安静 */
+    .todo-task-item:hover {
+      background: #f9fafb;
+    }
+
+    /* ─── 今日到期 / 已逾期：高危态 ─── */
+    /* 左侧 3px 红竖线 + 保留底分割线，两者共存，不粘连 */
+    .todo-task-item.is-expire {
+      border-left-color: #ef4444;
+      border-bottom-color: #f3f4f6; /* 明确声明，防止 border-left 覆盖 border-bottom */
+    }
+    .todo-task-item.is-expire:last-child {
+      border-bottom: none;
+    }
+    .todo-task-item.is-expire:hover {
+      background: #fef9f9;
+    }
+
+    /* ─── 行布局 ─── */
+    .todo-task-top-line,
+    .todo-task-bottom-line {
+      display: flex;
+      align-items: center;
+    }
+    /* top-line：徽章 + 名称 同一行,名称取剩余空间后单行截断 */
+    .todo-task-top-line { gap: 6px; }
+    /* bottom-line：创建时间 + 时效胶囊 两端对齐 */
+    .todo-task-bottom-line { justify-content: space-between; }
+
+    /* ─── 类型徽章：扁平莫兰迪蓝，无边框 ─── */
+    .todo-task-badge {
+      font-size: 10.5px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: #f0f5ff;
+      color: #3b72d4;
+      border: none;
+      letter-spacing: 0.15px;
+      max-width: 210px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    /* 高危行徽章：暖红色系，同样无边框 */
+    .todo-task-item.is-expire .todo-task-badge {
+      background: #fff1f0;
+      color: #cf1322;
+    }
+
+    /* ─── 基金名称：与徽章同行,不加粗,单行截断 ─── */
+    .todo-task-name {
+      font-size: 13px;
+      font-weight: 400;
+      color: #1a202c;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+      letter-spacing: 0.1px;
+    }
+
+    /* ─── 底部信息行 ─── */
+    .todo-task-bottom-line { margin-top: 0; }
+    .todo-task-create-time {
+      font-size: 11.5px;
+      font-weight: 400;
+      color: #b0b8c4;  /* 最浅，三层阶梯底端 */
+      letter-spacing: 0.1px;
+    }
+
+    /* ─── 时效胶囊：小巧清透 ─── */
+    .todo-task-time {
+      font-size: 11.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 5px;
+      letter-spacing: 0.1px;
+    }
+    .todo-task-time.alert {
+      color: #dc2626;
+      background: rgba(220, 38, 38, 0.10); /* 高危行对应胶囊微加深 */
+    }
+    .todo-task-time.amber {
+      color: #b45309;
+      background: rgba(180, 83, 9, 0.07);
+    }
+    .todo-task-time.muted {
+      color: #9ca3af;
+      background: rgba(156, 163, 175, 0.08);
+    }
+
+    /* ─── 空态 ─── */
+    .todo-widget-empty {
+      text-align: center;
+      color: #b0b8c4;
+      font-size: 13px;
+      font-weight: 400;
+      padding-top: 56px;
+      line-height: 1.8;
+    }
+
+    /* ===== NETWORK DIAGRAM (Stretched Elliptical Orbit - V4 解封) ===== */
+    .network-card .card-header {
+      padding: 12px 22px;
+    }
+    .network-card .card-title-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #fff7e8 0%, #f4a72b 48%, #ffbf52 100%);
+      color: #fff;
+      font-size: 18px;
+      box-shadow: 0 8px 18px rgba(230, 150, 36, 0.22);
+    }
+    .network-card .card-body {
+      padding: 20px 28px 24px;
+      background:
+        radial-gradient(ellipse at center, rgba(255, 188, 79, 0.08) 0 16%, transparent 17%),
+        #fff;
+    }
+    .network-diagram {
+      position: relative;
+      width: 100%;
+      max-width: 980px;
+      aspect-ratio: auto;         /* 💡 废除宽高比锁链：宽度缩窄时不再等比塌陷高度 */
+      min-height: 380px;          /* 💡 安全保底纵向空间，光环+卫星节点完整呈现 */
+      height: auto;
+      margin: 0 auto;
+      overflow: hidden;           /* 保留：防御性裁剪（光环超出 -36% 仍受控） */
+      container-type: inline-size;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 0;            /* 上下优雅留白 */
+    }
+    .network-diagram::before {
+      content: "";
+      position: absolute;
+      inset: -36% -18%;
+      border-radius: 50%;
+      background:
+        repeating-radial-gradient(ellipse at center,
+          transparent 0,
+          transparent clamp(58px, 7.5cqw, 76px),
+          rgba(247, 178, 73, 0.075) clamp(59px, 7.65cqw, 77px),
+          rgba(247, 178, 73, 0.075) clamp(60px, 7.8cqw, 78px),
+          transparent clamp(61px, 7.95cqw, 79px));
+      pointer-events: none;
+      z-index: 0;
+    }
+    /* Satellite connection lines (SVG overlay) - hazy silk-like dashed lines */
+    .network-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+    }
+    .network-lines line {
+      stroke: rgba(235, 168, 56, 0.36);
+      stroke-width: 1;
+      stroke-dasharray: 4 6;
+    }
+    /* Elliptical orbit rings */
+    .orbit-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(245, 166, 35, 0.12);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      display: none;
+    }
+    .orbit-1 { width: 34%; height: 32%; border-color: rgba(245, 166, 35, 0.16); }
+    .orbit-2 { width: 55%; height: 52%; border-color: rgba(245, 166, 35, 0.12); }
+    .orbit-3 { width: 76%; height: 70%; border-color: rgba(245, 166, 35, 0.09); }
+    .orbit-4 { width: 94%; height: 86%; border-color: rgba(245, 166, 35, 0.055); }
+    /* Central area: 3-layer nested circles (outer light orbit + mid ring + inner pink core) */
+    .network-center-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+    }
+    .center-outer-orbit {
+      width: clamp(220px, 32.5cqw, 280px);
+      height: clamp(220px, 32.5cqw, 280px);
+      border-radius: 50%;
+      background: rgba(255, 216, 151, 0.34);
+      border: 1px solid rgba(247, 185, 86, 0.18);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 24px 48px rgba(235, 168, 56, 0.18);
+    }
+    .center-mid-ring {
+      width: clamp(166px, 24cqw, 206px);
+      height: clamp(166px, 24cqw, 206px);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      box-shadow: none;
+    }
+    .center-mid-ring::before,
+    .center-mid-ring::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        conic-gradient(from 0deg,
+          transparent 0deg,
+          rgba(255, 151, 83, 0.08) 28deg,
+          rgba(255, 151, 83, 0.72) 82deg,
+          rgba(255, 151, 83, 0.72) 126deg,
+          transparent 170deg,
+          transparent 360deg);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+      animation: orbitSpin 4s linear infinite;
+    }
+    .center-mid-ring::after {
+      opacity: 0.78;
+      background:
+        conic-gradient(from 180deg,
+          transparent 0deg,
+          rgba(255, 178, 92, 0.08) 34deg,
+          rgba(255, 178, 92, 0.56) 92deg,
+          rgba(255, 178, 92, 0.56) 132deg,
+          transparent 178deg,
+          transparent 360deg);
+      animation-duration: 4s;
+    }
+    @keyframes orbitSpin {
+      to { transform: rotate(360deg); }
+    }
+    .center-inner-core {
+      width: clamp(108px, 15.4cqw, 132px);
+      height: clamp(108px, 15.4cqw, 132px);
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ffb36a 0%, #ff8750 48%, #ff5e3e 100%);
+      color: #fff;
+      font-size: clamp(16px, 2.35cqw, 20px);
+      font-weight: 700;
+      line-height: 1.28;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 14px 34px rgba(255,105,55,.30);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+    /* Satellite nodes: base layout (top/left/right/bottom modifiers handle direction & order) */
+    .node {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) translate(var(--node-x), var(--node-y));
+      display: flex;
+      align-items: center;
+      gap: clamp(9px, 1.65cqw, 14px);
+      z-index: 2;
+      cursor: pointer;
+    }
+    .node:hover .label {
+      filter: brightness(1.04);
+      box-shadow: 0 14px 24px rgba(219, 143, 31, 0.25);
+    }
+    /* Capsule label (stays perfectly horizontal, lightweight & translucent) */
+    .label {
+      width: clamp(132px, 18.7cqw, 160px);
+      height: clamp(40px, 5.6cqw, 48px);
+      padding: 0 clamp(16px, 2.55cqw, 22px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 24px;
+      color: #fff;
+      font-size: clamp(13px, 1.9cqw, 16px);
+      font-weight: 700;
+      background: linear-gradient(90deg, #eda92e 0%, #ffc24d 100%);
+      border: 1px solid rgba(255, 196, 78, 0.85);
+      box-shadow: 0 12px 22px rgba(219, 143, 31, 0.22);
+      white-space: nowrap;
+    }
+    /* Gold directional marker: short streaks + triangle arrow */
+    .arrow {
+      width: clamp(24px, 3.5cqw, 30px);
+      height: clamp(15px, 2.1cqw, 18px);
+      background:
+        linear-gradient(90deg, rgba(244, 183, 72, 0.26) 0 4px, transparent 4px 7px),
+        linear-gradient(90deg, rgba(244, 183, 72, 0.50) 0 5px, transparent 5px 9px);
+      background-size: 9px 4px, 11px 4px;
+      background-position: left 3px, left 11px;
+      background-repeat: repeat-x;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .arrow::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: clamp(7px, 1.05cqw, 9px) solid transparent;
+      border-bottom: clamp(7px, 1.05cqw, 9px) solid transparent;
+      border-left: clamp(10px, 1.4cqw, 12px) solid #f2b23a;
+      filter: drop-shadow(0 2px 4px rgba(221, 147, 38, 0.22));
+    }
+    /* Direction-specific layout: order + flex-direction keep label upright, only arrow position swaps */
+    .node.left  .arrow { order: 2; margin-left: 2px; }
+    .node.left  .label { order: 1; }
+    .node.right .arrow { order: 1; margin-right: 2px; }
+    .node.right .label { order: 2; }
+    .node.top    { flex-direction: column; gap: clamp(8px, 1.4cqw, 12px); }
+    .node.bottom { flex-direction: column-reverse; gap: clamp(8px, 1.4cqw, 12px); }
+    .node.top .arrow,
+    .node.bottom .arrow {
+      transform: rotate(90deg);
+    }
+    .node-pos-top { --node-x: 0px; --node-y: clamp(-158px, -18.4cqw, -96px); }
+    .node-pos-r1 { --node-x: clamp(174px, 28.5cqw, 245px); --node-y: clamp(-105px, -12.2cqw, -72px); }
+    .node-pos-r2 { --node-x: clamp(204px, 34.9cqw, 300px); --node-y: 0px; }
+    .node-pos-r3 { --node-x: clamp(176px, 29.7cqw, 255px); --node-y: clamp(40px, 9.3cqw, 80px); }
+    .node-pos-r4 { --node-x: clamp(144px, 25.6cqw, 220px); --node-y: clamp(92px, 16.3cqw, 140px); }
+    .node-pos-bottom { --node-x: 0px; --node-y: clamp(90px, 18cqw, 158px); }
+    .node-pos-l4 { --node-x: clamp(-220px, -25.6cqw, -144px); --node-y: clamp(92px, 16.3cqw, 140px); }
+    .node-pos-l3 { --node-x: clamp(-280px, -32.6cqw, -176px); --node-y: clamp(40px, 9.3cqw, 80px); }
+    .node-pos-l2 { --node-x: clamp(-300px, -34.9cqw, -204px); --node-y: 0px; }
+    .node-pos-l1 { --node-x: clamp(-245px, -28.5cqw, -174px); --node-y: clamp(-105px, -12.2cqw, -72px); }
+
+    @container (max-width: 440px) {
+      .center-outer-orbit { width: 184px; height: 184px; }
+      .center-mid-ring {
+        width: 140px;
+        height: 140px;
+        box-shadow: none;
+      }
+      .center-inner-core {
+        width: 92px;
+        height: 92px;
+        font-size: 14px;
+      }
+      .label {
+        width: 112px;
+        height: 34px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+      .arrow {
+        width: 18px;
+        height: 12px;
+        opacity: 0.72;
+      }
+      .arrow::after {
+        border-top-width: 6px;
+        border-bottom-width: 6px;
+        border-left-width: 8px;
+      }
+      .node { gap: 6px; }
+      .node.top,
+      .node.bottom { gap: 6px; }
+      .node-pos-top { --node-y: -96px; }
+      .node-pos-r1 { --node-x: 138px; --node-y: -58px; }
+      .node-pos-r2 { --node-x: 158px; }
+      .node-pos-r3 { --node-x: 140px; --node-y: 35px; }
+      .node-pos-r4 { --node-x: 112px; --node-y: 72px; }
+      .node-pos-bottom { --node-y: 84px; }
+      .node-pos-l4 { --node-x: -112px; --node-y: 72px; }
+      .node-pos-l3 { --node-x: -140px; --node-y: 35px; }
+      .node-pos-l2 { --node-x: -158px; }
+      .node-pos-l1 { --node-x: -138px; --node-y: -58px; }
+    }
+
+    /* ===== CALENDAR ===== */
+    .calendar-card .card-body { padding: 16px 14px 16px; }
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .month-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+    .nav-arrow {
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      color: #666;
+      transition: all 0.2s;
+    }
+    .nav-arrow:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .cal-weekday {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      padding: 6px 0;
+      font-weight: 500;
+    }
+    .cal-weekday:first-child,
+    .cal-weekday:last-child { color: #f5222d; }
+    .cal-day {
+      text-align: center;
+      padding: 4px 2px;
+      font-size: 12px;
+      color: #333;
+      cursor: pointer;
+      min-height: 42px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 2px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .cal-day:hover { background: var(--primary-light); }
+    .cal-day.today {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      margin: auto;
+      min-height: unset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cal-day.other-month { color: #ccc; }
+    .cal-day.weekend { color: #f5222d; }
+    .dot-row {
+      display: flex;
+      gap: 2px;
+      justify-content: center;
+    }
+    .cal-dot {
+      width: 6px;
+      height: 6px;
+      margin: 0 2px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    /* ⭐ 全新金融合规五色调色盘(绝对零度无绿方案) */
+    .dot-orange { background: #8c8c8c !important; }  /* 各市场节假日-摩卡暖灰 */
+    .dot-blue   { background: #104b7d !important; }  /* 产品开放申赎-深海靛蓝 */
+    .dot-green  { background: #d46b08 !important; }  /* 产品募集与上市-琥珀棕橙(去绿) */
+    .dot-red    { background: #f54e18 !important; }  /* 定期披露-珊瑚红橘 */
+    .dot-purple { background: #531dab !important; }  /* 手动创建日程-暗夜幽紫 */
+
+    /* Calendar legend - 3 columns, soft yellow background */
+    .calendar-legend {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px 14px;
+      background: var(--primary-light);   /* 淡黄/米黄底色块 */
+      border-radius: var(--radius);        /* 与卡片圆角一致 */
+      padding: 12px 14px;                  /* 内边距让条目呼吸 */
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #666;
+      white-space: nowrap;   /* 防止 "产品募集与上市" 等长文本折行 */
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-orange { background: #8c8c8c !important; }  /* 各市场节假日-摩卡暖灰 */
+    .legend-blue   { background: #104b7d !important; }  /* 产品开放申赎-深海靛蓝 */
+    .legend-green  { background: #d46b08 !important; }  /* 产品募集与上市-琥珀棕橙 */
+    .legend-red    { background: #f54e18 !important; }  /* 定期披露-珊瑚红橘 */
+    .legend-purple { background: #531dab !important; }  /* 手动创建日程-暗夜幽紫 */
+
+    /* ===== REMINDER POPOVER (Step 2: edge-flip + arrow tracking + smooth follow) ===== */
+    .reminder-popover {
+      position: fixed;
+      width: 280px;
+      max-width: 320px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+      z-index: 200;
+      pointer-events: auto;
+      opacity: 0;
+      transform: translateY(4px);
+      /* left/top transitions are skipped on first render via .no-transition class */
+      transition: opacity 0.18s ease, transform 0.18s ease, left 0.12s ease, top 0.12s ease;
+      visibility: hidden;
+    }
+    .reminder-popover.no-transition {
+      transition: none;
+    }
+    .reminder-popover.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      visibility: visible;
+    }
+    /* Arrow: a 12x12 square rotated 45° becomes a diamond. Position is set
+       via [data-placement] and inline left%, so it can point at any cell. */
+    .popover-arrow {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      transform: translateX(-50%) rotate(45deg);
+      transition: left 0.12s ease, top 0.12s ease, bottom 0.12s ease,
+                  box-shadow 0.12s ease;
+      pointer-events: none;
+    }
+    /* Default: popover is ABOVE the cell, arrow at popover's bottom pointing down */
+    .reminder-popover[data-placement="top"] .popover-arrow {
+      bottom: -6px;
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.04);
+    }
+    /* Flipped: popover is BELOW the cell, arrow at popover's top pointing up */
+    .reminder-popover[data-placement="bottom"] .popover-arrow {
+      top: -6px;
+      box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.04);
+    }
+    .popover-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .popover-header-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .popover-date {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+    }
+    .popover-count {
+      font-size: 11px;
+      color: #999;
+    }
+    .popover-list {
+      list-style: none;
+      padding: 6px 0;
+      margin: 0;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .popover-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      transition: background 0.15s;
+    }
+    .popover-item:hover {
+      background: #fafafa;
+    }
+    /* Row-level actions (only attached to 手动创建日程 rows). Always visible;
+       vertical alignment matches the subType (first line of body). The icon
+       hover effect (color + background change) is the "interactive" state. */
+    .popover-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      flex-shrink: 0;
+      align-self: flex-start;   /* align with the subType line, not the whole body */
+    }
+    .popover-item-icon {
+      border: none;
+      background: transparent;
+      color: #999;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .popover-item-icon:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .popover-item-icon-danger:hover {
+      background: rgba(245, 34, 45, 0.08);
+      color: var(--tag-red);
+    }
+    .popover-item-icon svg {
+      width: 13px;
+      height: 13px;
+      display: block;
+    }
+    .popover-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .popover-item-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .popover-item-cat {
+      display: inline;
+      font-size: 11px;
+      font-weight: normal;
+      color: #999;
+      letter-spacing: 0.2px;
+      margin-right: 2px;
+    }
+    .popover-item-cat::after {
+      content: ' · ';
+      color: #ccc;
+      margin: 0 4px 0 2px;
+    }
+    /* Standalone label shown on its own line (above the title), e.g.
+       手动创建日程 rows display subType on top, then title+desc below. */
+    .popover-item-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #999;
+      line-height: 1.3;
+      margin-bottom: 1px;
+      letter-spacing: 0.2px;
+    }
+    .popover-item-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.4;
+      margin-bottom: 2px;
+    }
+    /* Weight + color override for 手动创建日程 rows: subType matches the
+       visual weight of 各市场节假日's title (black + bold); content line
+       stays lighter (normal weight, slightly muted color). */
+    .popover-item.is-manual .popover-item-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 2px;
+    }
+    .popover-item.is-manual .popover-item-title {
+      font-size: 11px;
+      font-weight: normal;
+      color: #888;
+      margin-bottom: 0;
+    }
+    .popover-item-desc {
+      font-size: 11px;
+      color: #888;
+      line-height: 1.5;
+      word-break: break-all;
+      white-space: pre-line;
+    }
+    .popover-empty {
+      padding: 18px 14px;
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      list-style: none;
+    }
+    .popover-empty .empty-icon {
+      font-size: 22px;
+      display: block;
+      margin-bottom: 6px;
+      opacity: 0.5;
+    }
+    /* Reuse existing dot-* color tokens (the .dot- prefix class names already match) */
+    .popover-dot.dot-orange { background: #8c8c8c !important; }  /* 各市场节假日-摩卡暖灰 */
+    .popover-dot.dot-blue   { background: #104b7d !important; }  /* 产品开放申赎-深海靛蓝 */
+    .popover-dot.dot-green  { background: #d46b08 !important; }  /* 产品募集与上市-琥珀棕橙 */
+    .popover-dot.dot-red    { background: #f54e18 !important; }  /* 定期披露-珊瑚红橘 */
+    .popover-dot.dot-purple { background: #531dab !important; }  /* 手动创建日程-暗夜幽紫 */
+
+    /* ===== CALENDAR EDIT BUTTON (header right-side entrance) ===== */
+    .calendar-edit-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      color: #999;
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+    .calendar-edit-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      transform: scale(1.08);
+    }
+    .calendar-edit-btn:active {
+      transform: scale(0.94);
+    }
+    .calendar-edit-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ===== SCHEDULE MANAGEMENT MODAL ===== */
+    .schedule-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .schedule-modal.is-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .schedule-modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+    }
+    .schedule-modal-panel {
+      position: relative;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+      width: 480px;
+      max-width: 100%;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.96) translateY(8px);
+      transition: transform 0.2s ease;
+    }
+    .schedule-modal.is-visible .schedule-modal-panel {
+      transform: scale(1) translateY(0);
+    }
+    .schedule-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .schedule-modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    .schedule-modal-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 22px;
+      line-height: 1;
+      color: #999;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .schedule-modal-close:hover {
+      background: #f5f5f5;
+      color: #333;
+    }
+    .schedule-modal-form {
+      padding: 18px 20px 0;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-field {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .form-label .required {
+      color: var(--tag-red);
+      margin-left: 2px;
+    }
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #333;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
+    }
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.12);
+    }
+    .form-input.has-error,
+    .form-textarea.has-error {
+      border-color: var(--tag-red);
+      box-shadow: 0 0 0 3px rgba(245, 34, 45, 0.08);
+    }
+    .form-input.has-error:focus,
+    .form-textarea.has-error:focus {
+      border-color: var(--tag-red);
+      box-shadow: 0 0 0 3px rgba(245, 34, 45, 0.08);
+    }
+    .form-input:disabled,
+    .form-input[readonly] {
+      background: #f7f7f7;
+      color: #999;
+      cursor: not-allowed;
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+    /* Tag input for 可见人 */
+    .form-tag-input {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      /* Explicit row + column gaps so chips always breathe (no overlap on wrap) */
+      row-gap: 6px;
+      column-gap: 8px;
+      width: 100%;
+      min-height: 36px;
+      padding: 4px 40px 4px 8px;   /* extra right padding so chips never overlap trigger */
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      cursor: text;
+      box-sizing: border-box;
+    }
+    .form-tag-input.is-focused {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.12);
+    }
+    .form-tag-input.has-error {
+      border-color: var(--tag-red);
+      box-shadow: 0 0 0 3px rgba(245, 34, 45, 0.08);
+    }
+    .form-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 4px 2px 8px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .form-tag-remove {
+      border: none;
+      background: transparent;
+      color: var(--primary-dark);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+      border-radius: 2px;
+      transition: background 0.15s;
+    }
+    .form-tag-remove:hover {
+      background: rgba(0, 0, 0, 0.08);
+    }
+    /* Trigger button (▼) — absolutely pinned to the right edge */
+    .form-tag-trigger {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      border-radius: 4px;
+      transition: background-color 0.15s, color 0.15s;
+      z-index: 1;
+    }
+    .form-tag-trigger:hover,
+    .form-tag-trigger:focus,
+    .form-tag-trigger[aria-expanded="true"] {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      outline: none;
+    }
+    .form-tag-arrow {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.18s ease;
+    }
+    .form-tag-trigger[aria-expanded="true"] .form-tag-arrow {
+      transform: rotate(180deg);
+    }
+    /* Dropdown panel — full width, anchored to bottom of input */
+    .form-tag-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 4px 0;
+      list-style: none;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+      z-index: 10;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .form-tag-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.12s, color 0.12s;
+    }
+    .form-tag-option:hover {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+    .form-tag-option.is-selected {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .form-tag-option.is-selected::before {
+      content: '✓';
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .form-tag-option-badge {
+      display: inline-block;
+      background: #eef4fb;
+      color: #4a6b8a;
+      font-size: 10px;
+      font-weight: 500;
+      line-height: 1.5;
+      padding: 1px 6px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      letter-spacing: 0.3px;
+    }
+    .form-tag-option.is-selected .form-tag-option-badge {
+      background: #d9e7f5;
+      color: #2a4a6b;
+    }
+    .form-tag-option-name {
+      flex: 1;
+      min-width: 0;
+    }
+    .form-error {
+      display: none;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--tag-red);
+    }
+    .form-error.is-visible {
+      display: block;
+    }
+    .schedule-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      margin: 18px -20px 0;
+      background: #fafafa;
+      border-radius: 0 0 12px 12px;
+    }
+    .btn {
+      padding: 7px 16px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    }
+    .btn-secondary {
+      background: #fff;
+      border-color: var(--border);
+      color: #666;
+    }
+    .btn-secondary:hover {
+      border-color: #ccc;
+      color: #333;
+    }
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    /* ===== REMINDER POPOVER — responsive (≤768px → bottom drawer) ===== */
+    @media (max-width: 768px) {
+      .reminder-popover {
+        /* Override fixed positioning: dock to bottom as a full-width drawer */
+        top: auto !important;
+        left: 16px !important;
+        right: 16px !important;
+        bottom: 16px !important;
+        width: auto !important;
+        max-width: none !important;
+        /* No entrance translateY in drawer mode */
+        transform: none !important;
+        border-radius: 14px;
+      }
+      .reminder-popover .popover-arrow {
+        display: none;
+      }
+      .popover-header {
+        padding: 14px 16px 12px;
+      }
+      .popover-item {
+        padding: 10px 16px;
+      }
+      .popover-list {
+        max-height: 50vh;
+      }
+    }
+
+    /* ===== TIMELINE (信披重点事项) ===== */
+    .timeline-section .card-body { padding: 0; }
+    .date-filter {
+      display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+      border: 1px solid var(--border); border-radius: 4px;
+      font-size: 12px; color: #666; background: #fff;
+    }
+    .date-filter .date-icon { font-size: 13px; }
+    /* 外层只负责横向滚动 */
+    .timeline-horizontal-scroll {
+      width: 100%; height: 320px;
+      overflow-x: auto; overflow-y: hidden;
+      background: #fffdfa;
+    }
+    .timeline-horizontal-scroll::-webkit-scrollbar { height: 6px; }
+    .timeline-horizontal-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 3px; }
+    .timeline-horizontal-scroll::-webkit-scrollbar-track { background: transparent; }
+    /* 内层 flex 容器：随内容撑宽，::before 画横轴线 */
+    .timeline-content {
+      display: inline-flex; align-items: flex-start;
+      min-width: 100%; height: 100%;
+      padding: 0 24px; position: relative;
+    }
+    .timeline-content::before {
+      content: ''; position: absolute;
+      left: 24px; right: 24px; top: 144px;
+      height: 20px; background: rgba(212,183,120,0.28);
+      border-radius: 3px;
+      z-index: 1; pointer-events: none;
+    }
+    /* 月份大组：行方向，左列=连接轨，右列=内容 */
+    .month-group {
+      flex-shrink: 0; display: flex; flex-direction: row;
+      align-items: flex-start; width: auto;
+      margin-right: 20px; position: relative; z-index: 2;
+    }
+    /* 上轨：组高=X轴顶边(144px)，month-body 用 overflow:hidden 截断卡片背景；dot-anchor 留在 node-rail flex 流中 */
+    .month-group-top    { align-self: flex-start; height: 144px; }
+    .month-group-top    .month-body { overflow: hidden; height: 100%; }
+    /* 下轨：组从X轴底边(164px)开始 */
+    .month-group-bottom { align-self: flex-start; margin-top: 164px; height: 156px; }
+    .month-group-bottom .month-body { overflow: hidden; height: 100%; }
+
+    /* 左列：连接轨 */
+    .node-rail {
+      display: flex; flex-direction: column; align-items: center;
+      flex-shrink: 0; width: 12px; height: 100%; position: relative;
+    }
+    .month-group-top    .node-rail { justify-content: flex-start; padding-top: 14px; }
+    .month-group-bottom .node-rail { justify-content: flex-end;   padding-bottom: 14px; }
+    /* dot-anchor 脱离 overflow:hidden 的裁剪：绝对定位到 .month-group（无overflow），精确落在X轴中线 */
+    /* 上轨组底边=144px，X轴中线=154px → dot-anchor底边=160px → bottom=-(160-144)=-16px */
+    .month-group-top    .dot-anchor { position: absolute; bottom: -16px; left: 0; }
+    /* 下轨组顶边=164px，X轴中线=154px → dot-anchor顶边=148px → top=-(164-148)=-16px */
+    .month-group-bottom .dot-anchor { position: absolute; top: -16px;    left: 0; }
+
+    .solid-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .y-vertical-line {
+      flex: 1; width: 2px; min-height: 4px;
+      background: linear-gradient(to bottom, var(--line-color), transparent);
+    }
+    .month-group-bottom .y-vertical-line {
+      background: linear-gradient(to top, var(--line-color), transparent);
+    }
+    .dot-anchor { width: 12px; height: 12px; background: #fff; border-radius: 50%;
+                  flex-shrink: 0; border: 2px solid; }
+
+    /* 右列：内容区（月份标题 + 卡片，纵向排列） */
+    .month-body {
+      display: flex; flex-direction: column; justify-content: flex-start;
+      padding-left: 10px;
+    }
+    .month-group-top    .month-body { padding-top: 10px; padding-bottom: 12px; }
+    .month-group-bottom .month-body { justify-content: flex-end; padding-bottom: 10px; padding-top: 12px; }
+
+    /* 月份标题行 */
+    .month-header-row { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 14px; white-space: nowrap; }
+    /* 卡片容器 */
+    .cards-container { display: flex; gap: 12px; z-index: 2; margin-top: 8px; }
+    .month-group-top    .cards-container { margin-bottom: 12px; }
+    .month-group-bottom .cards-container { margin-top: 12px; }
+    .timeline-item-card {
+      width: 280px; height: auto; min-height: 90px; border-radius: 4px;
+      padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); flex-shrink: 0;
+    }
+    .item-card-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 6px; }
+    .item-card-desc { font-size: 12px; color: #666; line-height: 1.6; word-break: break-all; }
+    /* ===== 5月色系 ===== */
+    .month-jul .month-header-row { color: #8B0000; } .month-jul .solid-dot { background-color: #8B0000; }
+    .month-jul .y-vertical-line { --line-color: #8B0000; } .month-jul .dot-anchor { border-color: #8B0000; }
+    .month-jul .timeline-item-card { background: linear-gradient(to bottom, rgba(139,0,0,0.09) 0%, #fff 100%); }
+    .month-aug .month-header-row { color: #B8860B; } .month-aug .solid-dot { background-color: #B8860B; }
+    .month-aug .y-vertical-line { --line-color: #B8860B; } .month-aug .dot-anchor { border-color: #B8860B; }
+    .month-aug .timeline-item-card { background: linear-gradient(to bottom, rgba(184,134,11,0.09) 0%, #fff 100%); }
+    .month-sep .month-header-row { color: #0E7C7B; } .month-sep .solid-dot { background-color: #0E7C7B; }
+    .month-sep .y-vertical-line { --line-color: #0E7C7B; } .month-sep .dot-anchor { border-color: #0E7C7B; }
+    .month-sep .timeline-item-card { background: linear-gradient(to bottom, rgba(14,124,123,0.09) 0%, #fff 100%); }
+    .month-nov .month-header-row { color: #6C3483; } .month-nov .solid-dot { background-color: #6C3483; }
+    .month-nov .y-vertical-line { --line-color: #6C3483; } .month-nov .dot-anchor { border-color: #6C3483; }
+    .month-nov .timeline-item-card { background: linear-gradient(to bottom, rgba(108,52,131,0.09) 0%, #fff 100%); }
+    .month-apr .month-header-row { color: #1E6B3B; } .month-apr .solid-dot { background-color: #1E6B3B; }
+    .month-apr .y-vertical-line { --line-color: #1E6B3B; } .month-apr .dot-anchor { border-color: #1E6B3B; }
+    .month-apr .timeline-item-card { background: linear-gradient(to bottom, rgba(30,107,59,0.09) 0%, #fff 100%); }
+    /* ===== DASHBOARD STATS (数字化看板) ===== */
+    .dashboard-section .card-body { padding: 0; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+    }
+    .stat-item {
+      padding: 22px 20px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-item:hover { background: var(--primary-light); }
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.2;
+    }
+    .stat-value.blue   { color: var(--tag-blue); }
+    .stat-value.green  { color: var(--tag-green); }
+    .stat-value.red    { color: var(--tag-red); }
+    .stat-value.purple { color: var(--tag-purple); }
+    .stat-sub {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1200px) {
+      .top-section,
+      .two-col-section,
+      .top-section.two-col-section { grid-template-columns: 1fr; }
+      .network-card .card-body { padding: 16px 24px 18px; }
+      .network-diagram {
+        max-width: 680px;
+        min-height: 340px;
+      }
+      .timeline-grid { grid-template-columns: repeat(2, 1fr); }
+      .timeline-card:nth-child(3n) { border-right: 1px solid var(--border); }
+      .timeline-card:nth-child(2n) { border-right: none; }
+      .timeline-card:nth-last-child(-n+3) { border-bottom: 1px solid var(--border); }
+      .timeline-card:nth-last-child(-n+2) { border-bottom: none; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .stat-item:nth-child(3n) { border-right: none; }
+      /* Row 2 高度不变:中等屏下两栏变单栏垂直堆叠,
+         右侧卡片仍走 var(--row2-card-height) 钉高,任务多时内部滚动。 */
+    }
+    @media (min-width: 1201px) {
+      .calendar-card {
+        margin-top: 8px;
+      }
+      .network-card .card-body {
+        padding-top: 18px;
+        padding-bottom: 18px;
+      }
+      .network-diagram {
+        max-width: 860px;
+        min-height: 400px;
+      }
+      .calendar-card .card-body {
+        padding-top: 18px;
+        padding-bottom: 24px;
+      }
+      .calendar-nav {
+        margin-bottom: 16px;
+      }
+      .cal-day {
+        min-height: 48px;
+        padding-top: 6px;
+      }
+    }
+    @media (max-width: 768px) {
+      .nav-menu { display: none; }
+      .timeline-grid { grid-template-columns: 1fr; }
+      .timeline-card { border-right: none !important; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .page-wrapper { padding: 8px; }
+      /* Row 2 移动端:小屏竖向空间珍贵,把右侧任务卡压缩到 calc 视口自适应,
+         保证至少能展示 3~4 条任务 + 触发滚动。 */
+      .todo-home-widget-card {
+        height: calc(100vh - 220px);
+        max-height: calc(100vh - 220px);
+        min-height: 320px; /* 视觉下限,防止空列表时塌成一条线 */
+      }
+      .todo-widget-summary-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style><!--pnid:lqC4hsiK5jEQYST6CCy8Ui-->
+</head><!--pnid:7DKlDjETxazXKION56TB12-->
+<body data-page-node-id="c3Sa2oAxo8EsqmUH1pGRaw"><!--pnid:9aKmkU9teFfMLK5xKQ3RP4-->
+
+  <!--pnid:bDxVCt6SRrWhZgAhIRkvgt--><!-- ===== TOP NAVIGATION ===== --><!--pnid:gJNr8YvGAHK8MMKjzsqAqU-->
+  <header data-page-node-id="8tlPt9NME9VDFU3NzJ1UPT" class="top-nav-bar"><!--pnid:f9kRaI0uDBv8nke0D1oO5Z-->
+    <nav data-page-node-id="ADjexUghF2AwrCHzTYpEA6" class="top-nav"><!--pnid:MYGZLxHOnVENzMFsmvQaOj-->
+      <div data-page-node-id="jJGMYZGUtv1ivDcjz0BxYa" class="nav-logo"><!--pnid:E2DcK4Bt1c2j0bU2hI5WBW-->
+        <div data-page-node-id="CI9MWgDJBgA0E7PGIfjIo3" class="nav-logo-icon"><!--pnid:4HCokZnUNrk8vO6v73WS7g-->CUAM</div><!--pnid:UYyy1remu5t4TA7sW4m1hR-->
+        <div data-page-node-id="F2Bg6JxB9VlDI8vuliUXbN" class="nav-logo-text"><!--pnid:mxFkWw0r0om5Ru2YJKYqDZ-->
+          <span data-page-node-id="in22ehQ1hC38tizNVUS9Ge" class="main-title"><!--pnid:FHA7DTth16PnAjf0GpgF9v-->信披与报告管理平台</span><!--pnid:p3i3sTgWwQmx3OeTTjIC80-->
+          <span data-page-node-id="0BkzeYnq4RxVL3MnDzbOgH" class="sub-title"><!--pnid:alQZ0NwkZ5btM0JdP4SIcC-->汇添富基金管理股份有限公司</span><!--pnid:sHjVmvFzDAFnvomCSAzSQ0-->
+        </div><!--pnid:rL8B82JRadrnEuwPLwd2fI-->
+      </div><!--pnid:VooNDpbpjmBFpS40UuZRfe-->
+
+      <ul data-page-node-id="MnyiF36gX8vJOwkGPfN55K" class="nav-menu"><!--pnid:BWJuDyPOZiR27HUiV8ZXCk-->
+        <li data-page-node-id="1ElTkiR4bi4BYFxpWnQSQl" class="nav-menu-item active"><svg data-page-node-id="HulsqpgAxUIToA3ltFQLGC" height="13" class="menu-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="13" style="vertical-align:middle; margin-right:5px; fill:currentColor"><path data-page-node-id="XoaFtc38Kq961R85mCtZhU" d="M538.29 128.76C273.15 113.42 51.93 332.29 64.51 597.57A445.51 445.51 0 0 0 133.65 816a450.67 450.67 0 0 0 40.51 54.23A74.83 74.83 0 0 0 230.53 896h562.94a74.83 74.83 0 0 0 56.37-25.77A450.67 450.67 0 0 0 890.35 816 445.9 445.9 0 0 0 960 576c0-238.6-186.53-433.63-421.71-447.24z m265.28 671.79A39.87 39.87 0 0 1 772 816H252a39.79 39.79 0 0 1-31.55-15.41A366.32 366.32 0 0 1 144 579.13c-1.66-200.21 158.07-365.81 358.22-371C709.93 202.74 880 369.51 880 576a366.4 366.4 0 0 1-76.43 224.55z"></path><path data-page-node-id="UH0BbSx4AH7nm0tamGTrgt" d="M512 296m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z"></path><path data-page-node-id="oqU9M23h6qhXCE3XxRbDXs" d="M311.54 379.04m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z"></path><path data-page-node-id="KczkmDCBnIniOh5xliJJKf" d="M228.5 579.5m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z"></path><path data-page-node-id="Evuwx7Ls4oRkNbXJ4nzb4T" d="M795.5 579.5m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z"></path><path data-page-node-id="R7xFqu6DfIDtAiOI0jYRh1" d="M712.47 379.04m-40 0a40 40 0 1 0 80 0 40 40 0 1 0-80 0Z"></path><path data-page-node-id="FwWEiyW0WBW03zQcwtA5PZ" d="M591.84 401a32 32 0 0 0-40.2 20.78L502.86 575a96 96 0 1 0 61 19.41l48.77-153.19A32 32 0 0 0 591.84 401z"></path></svg><!--pnid:qdRL7EFQRXTZc295Jx1IhB-->工作台</li><!--pnid:EFoYpJokl2I4rNumVDQqAz-->
+        <li data-page-node-id="sXBs6kbjn5eGOrupN5VUrP" class="nav-menu-item"><span data-page-node-id="mbifUyOtJJF1rzKlIIub4G" class="menu-icon"><!--pnid:1HsSkOH4CoPyWOoJb2G2vJ-->☰</span><!--pnid:lPCo3ZkL57jzHfdWAqBb8i-->信批日历</li><!--pnid:xphsmiIjJLzHYqRv0HpSAk-->
+        <li data-page-node-id="UHQ4RCWTfrHWZcFj3F0RLD" class="nav-menu-item"><span data-page-node-id="tDrwaiU1FC8GG5DWCRQtRS" class="menu-icon"><!--pnid:InKh5zVdPlk3eHdUJXwLvt-->☰</span><!--pnid:ensTP3QtpaJvAwt4pCshWK-->模板管理</li><!--pnid:IdDbO7VlKHylga6gphb8F8-->
+        <li data-page-node-id="wvcPCTeCSS3XFtssWK6uFf" class="nav-menu-item"><span data-page-node-id="0OUSUij31QPI0vogV8UVC1" class="menu-icon"><!--pnid:SDs416vVWuULq2TUkGNtkD-->☰</span><!--pnid:Yb7SKXlcB4DSLGyYjjBunl-->标签管理</li><!--pnid:ldTWf6DIsibembGd8oDx2I-->
+        <li data-page-node-id="0JCFlGvQ6HwjAdTkZ1SwJB" class="nav-menu-item"><span data-page-node-id="GuMJF3SrwmTEBs6c3ElWnv" class="menu-icon"><!--pnid:wDtFUGxSAtXUhM2muSeT7r-->☰</span><!--pnid:FN3uRqLqW3lgfuML1w9Uhz-->数据管理</li><!--pnid:pkB6856oWxRPWRHAIdiXK3-->
+        <li data-page-node-id="twhWEwGeck8BCppHDG49IV" class="nav-menu-item"><span data-page-node-id="GEPvGfrJEEbgZZ3jhvL3NU" class="menu-icon"><!--pnid:F28tZvnrF0WTEOayO30VN6-->☰</span><!--pnid:rCJEIz5QrSTfvnyOy4bYSu-->任务管理</li><!--pnid:JpuwsgYDBn5WVoQH2TnoXa-->
+        <li data-page-node-id="Hf039Sn9uzZua4I7hHhGxT" class="nav-menu-item"><span data-page-node-id="APbo20cFSGvUd96ykwBZkH" class="menu-icon"><!--pnid:HBTuHze6U1OTrYyhVR0efA-->☰</span><!--pnid:0LhKwRh0kCACti2rxQGtYs-->下载管理</li><!--pnid:Kp774B7RpELX7xgYCUvNpE-->
+        <li data-page-node-id="3oW9HkI0gkFQb6zir0992Y" class="nav-menu-item"><span data-page-node-id="JvN6H0DVa7hyl3tiHVHTJm" class="menu-icon"><!--pnid:R2WykX5pENkIzCKMvo7UsR-->☰</span><!--pnid:YPA9deyhceXEPQHJz0qLUB-->通知管理</li><!--pnid:qaLHmvFyHdl5PGkS0VPEzU-->
+        <li data-page-node-id="UCbsSmdZBT6FEI765YgFIE" class="nav-menu-item"><span data-page-node-id="wfbeiBemhFrLvgCFjBUIG4" class="menu-icon"><!--pnid:3dhVVy86OubH1SUIqQ4GXT-->☰</span><!--pnid:9JzlOkhlHdY4VeLiIlCAWs-->发布管理</li><!--pnid:DBFtoFKyOIib1sW72AUwAg-->
+        <li data-page-node-id="kD2qKNyg5DOLq1mdEEDpyl" class="nav-menu-item"><span data-page-node-id="bfRFBPT3FqniNv0F9pYTPh" class="menu-icon"><!--pnid:oWWly5kv6myQ7o4hg9m0iJ-->☰</span><!--pnid:6FJ8vVLcdezwrJLr9JE1oe-->系统管理</li><!--pnid:TKg5FBdDsCt90BycweuYWX-->
+      </ul><!--pnid:TNklhLAfCB4rttq2tKEdSx-->
+
+      <div data-page-node-id="b54rKl7NOe40zcSgVjBoNU" class="nav-actions"><!--pnid:DT1wuX5Wc7hBRawrw9ycsD-->
+        <div data-page-node-id="MAThwfJhkAW9SNeFJsYmLs" class="user-info"><svg data-page-node-id="YgIjD3jW39p13uXJpcZVLn" xmlns="http://www.w3.org/2000/svg" width="14" height="14" class="user-icon" viewBox="0 0 1024 1024" version="1.1" style="margin-right:4px; fill:currentColor; vertical-align:middle"><path data-page-node-id="1d9lcbFhFWbcGFDAHoyh0R" d="M880.864 704.346c-56.813-25.397-141.118-90.818-265.945-113.298 31.924-34.36 56.084-88.097 80.937-151.754 14.403-36.893 11.935-68.343 11.935-113.121 0-33.073 6.193-86.156-1.97-115.329-27.533-98.59-97.1-125.79-178.61-125.79-81.577 0-151.229 27.328-178.71 126.087-8.097 29.083-1.888 82.044-1.888 115.037 0 44.875-2.422 76.432 12.019 113.383 25.044 63.984 48.854 117.644 80.655 151.86-123.826 22.89-207.498 87.822-263.95 113.138C58.523 756.945 57.95 814.296 57.95 814.296v97.42l940.724-0.112v-97.308s-0.547-57.548-117.809-109.95z"></path></svg><!--pnid:xFWD9eZZcGFeJsbamUMvBy-->员工A</div><!--pnid:tAXiTKGgshcGxtOEaf9Csk-->
+        <div data-page-node-id="U6pBJQsGcE1eaToaAVZdQo" class="action-btn"><svg data-page-node-id="RP3X91Z4dPytyFoheTu6VC" height="14" class="action-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="14" style="vertical-align:middle; margin-right:4px; fill:currentColor"><path data-page-node-id="QiNqMBaXh13dhUmmw2A4jR" d="M652 125.54l0 71.8c140 63.74 211.28 193.28 211.28 342.82 0 212.64-171.62 384.98-384.24 384.98-212.6 0-380.56-172.34-380.56-384.98 0-149.22 93.52-278.56 213.52-342.42l0-71.84c-180 68.46-278.14 228.16-278.14 414.24 0 248.52 199.42 449.94 447.92 449.94 248.48 0 447.5-201.42 447.5-449.94 0-186.38-97.28-346.32-277.28-414.6zM512 412c0 22.08-17.92 40-40 40l0 0c-22.08 0-40-17.92-40-40l0-340c0-22.08 17.92-40 40-40l0 0c22.08 0 40 17.92 40 40l0 340z"></path></svg><!--pnid:DsZa3KTiAquUfVllI7oeeK-->退出</div><!--pnid:FanPo4nisAEiSexoprn9Hr-->
+      </div><!--pnid:5Ae5ovLSeqK1vm2GrbLziU-->
+    </nav><!--pnid:FAq3QISqZVAMTjEnPcwILS-->
+  </header><!--pnid:rjjmre9iGJ41wdphaToIiz-->
+
+  <!--pnid:GcG0otf94oW5Dw5NQ7cQfl--><!-- ===== MAIN CONTENT ===== --><!--pnid:vBlE5XjlHol88Wk1EdAwBk-->
+  <main data-page-node-id="XBJQuID27KH3VWE0AX5Nqp" class="page-wrapper"><!--pnid:eOd5QneLvQBnYCFXckA8gI-->
+
+    <!--pnid:cddRAk6bFyQO19iRMx3oiw--><!-- ═══════ ROW 1 首屏黄金动线：待办公告任务提示 + 信披数据网络 + 产品任务日历 ═══════ --><!--pnid:reYUwsh9IifZPfG1xMVNgl-->
+    <section data-page-node-id="wtnvjdHdOVO23ZwwmElbAY" class="top-section two-col-section"><!--pnid:qPTKzuszlvlD6OX1gCAfS7-->
+
+      <!-- ═══════════════ 左侧第一黄金视觉区：待办公告任务提示 ═══════════════ -->
+      <div data-page-node-id="newModuleNoticeReminder" class="todo-home-widget-card">
+        <div class="todo-widget-header">
+          <div class="todo-widget-title">🔔 待办公告任务提示</div>
+          <a class="todo-widget-more" href="./todo-list-management.html?status=pending">查看全部 ›</a>
+        </div>
+        <div class="todo-widget-summary-bar">
+          <div class="todo-stat" id="todo-tab-all" data-tab="all">
+            <span class="todo-stat-label">全部待办</span>
+            <span class="todo-stat-num" id="todo-num-all">0</span>
+          </div>
+          <span class="todo-stat-sep">·</span>
+          <div class="todo-stat todo-stat-expire" id="todo-tab-expire" data-tab="expire">
+            <span class="todo-stat-label">今日到期</span>
+            <span class="todo-stat-num" id="todo-num-expire">0</span>
+          </div>
+        </div>
+        <div class="todo-widget-list-body" id="todo-widget-list"></div>
+        <div class="todo-widget-pagination">
+          <span class="todo-page-nav is-disabled" id="todoPagePrev" title="上一页">‹</span>
+          <span class="todo-page-text" id="todoPageText">1 / 1</span>
+          <span class="todo-page-nav is-disabled" id="todoPageNext" title="下一页">›</span>
+        </div>
+      </div>
+
+      <!--pnid:ov11DGAS5nmg7OJEAIACCE--><!-- 信披数据网络 --><!--pnid:c00amyh6u2hfHaILnfw8Tq-->
+      <article data-page-node-id="I8AvEi2PaOKMHqhCB3RID7" class="card network-card"><!--pnid:EROvvHH9VbGdNGAG3yNQUv-->
+        <div data-page-node-id="91zSoO8CnzS65hjQbZr0Z6" class="card-header"><!--pnid:WZFWKiuU3jK4X4LDxmErqK-->
+          <div data-page-node-id="nBaIsi56uSb8s6u9yELhGK" class="card-title"><!--pnid:bEnC66pTbEJ1hCxwKEH2MU-->
+            <div data-page-node-id="5hEKImz18hnKfNyB5Sso6F" class="card-title-icon"><!--pnid:Y1DcBRjl8E3jrM2WlpCyM1-->📂</div><!--pnid:KQCA57Wbfdn1tE4LdkEdlX-->
+            信披数据网络
+          </div><!--pnid:HHOKJpPVwVM7WKkXH9hGKJ-->
+        </div><!--pnid:K4WHQSiWh4Ok1fCBziZGj4-->
+        <div data-page-node-id="4R3o7RBjEbqxnygZJRUpEF" class="card-body"><!--pnid:oOfjxRLyDDacknbZ3HxCMw-->
+          <div data-page-node-id="4EWBDKj8bBNhggE6a9Sdc5" class="network-diagram"><!--pnid:yfMUjWFkQiYGhOh0YAjAXD-->
+            <!--pnid:5XSyjLDxfDY3dUscTS3JVl--><!-- 4 elliptical orbit rings --><!--pnid:L4fbSAa6kOp1cgyHVTGCB9-->
+            <div data-page-node-id="3yj7KpQfC4ajAqGtkJdeGm" class="orbit-ring orbit-1"></div><!--pnid:u2Ku7WOjiH0ormops8LDGw-->
+            <div data-page-node-id="WfS8MxIrM2ngcCciCxu0Rm" class="orbit-ring orbit-2"></div><!--pnid:FNKQPAiXuNQYS6wPcrFC8u-->
+            <div data-page-node-id="AkTP414z0peXqogDUuvkq4" class="orbit-ring orbit-3"></div><!--pnid:VZ7BW58a5YrAyjCEeSryyb-->
+            <div data-page-node-id="e4hOyszvsQ9EcJ22oOovfG" class="orbit-ring orbit-4"></div><!--pnid:cYedbvVRocjDT0ldcMHscT-->
+
+            <!--pnid:ApNT2CcEgaVeMZcuBx6Bkz--><!-- Satellite connection lines: from each node to the edge of the outer orbit (radius 75px from center 425,193; container 850×386) --><!--pnid:zNJqN9Rer7OteQ7xDbBYq4-->
+            <svg data-page-node-id="Gq1r8oQjvmmvhxV50XDNX1" xmlns="http://www.w3.org/2000/svg" class="network-lines" viewBox="0 0 850 386"><!--pnid:YWWsks8VgDraWwDQHsSGnP-->
+              <line data-page-node-id="fcr3VIObEeT6qU5typtBr2" y1="58" x2="425" y2="118" x1="425"/><!--pnid:02qKgCqZMFVB33Vht5CEWE-->
+              <line data-page-node-id="9n2JVQK3ccWjQarIyllrJr" x1="615" y1="103" x2="493" y2="161"/><!--pnid:6hjVMFueJjBkWSLVZ1O3R9-->
+              <line data-page-node-id="8rzwJPpiqZCQhpwjJOwNrK" x2="500" y2="193" x1="685" y1="193"/><!--pnid:pItaJZ31EjGGKAWyBOAepO-->
+              <line data-page-node-id="pWlDNfd7BHSwO4MToop1iN" x2="493" y2="225" x1="615" y1="283"/><!--pnid:QujDa7qwRYuNFPQAnhNQqg-->
+              <line data-page-node-id="uVFTxwgoJpa8SFm9LdXICJ" y2="241" x1="585" y1="328" x2="482"/><!--pnid:dt2hfIKWjCT2TXX82bYck8-->
+              <line data-page-node-id="kSrUa28l0QVfcCxV6ECVV7" y2="268" x1="425" y1="338" x2="425"/><!--pnid:4UJu34FtTqxsPwee96j6GW-->
+              <line data-page-node-id="4yo7oRlEQulUzLUre7SgKj" y1="328" x2="368" y2="241" x1="265"/><!--pnid:j42qI60hPFomkjZfwEWZE3-->
+              <line data-page-node-id="NTAmFrHn46FXn2DHK6jvvR" y1="263" x2="353" y2="215" x1="195"/><!--pnid:Hk0duLzI0BlDs8JKxJPxuK-->
+              <line data-page-node-id="DhUGywHxMayWksTgvLxn7a" y2="193" x1="165" y1="193" x2="350"/><!--pnid:XKeCxKWigyFUuCyD4Dv8G1-->
+              <line data-page-node-id="GFTOH9lAu955mqFA4vTodZ" y2="161" x1="235" y1="103" x2="357"/><!--pnid:XyqXGHxpjmV1kRtwDIf6vt-->
+            </svg><!--pnid:BxYAf4ndHZEXjqY2J4c5zo-->
+
+            <!--pnid:I7GBXCrgAzUuFjfXWtPVex--><!-- Central: 3-layer nested circles (outer light orbit + mid ring + inner pink core) --><!--pnid:pEqp4Pa8jchfe1jAO8YoR5-->
+            <div data-page-node-id="H54quTwPtFBM9hDkSFSf2u" class="network-center-wrapper"><!--pnid:VxOiXAt3kyWNFCacid8rPR-->
+              <div data-page-node-id="Flvk5qrBo3hQOJUuIBEpa7" class="center-outer-orbit"></div><!--pnid:CjHPy3N1OkkVzJ1BwFVNzF-->
+              <div data-page-node-id="JtNeagAskO59qzFrB1AEcL" class="center-mid-ring"></div><!--pnid:AzQLHwTZufe7Z16z0sJbI0-->
+              <div data-page-node-id="mJnkvOv0zDd3CHsuDYjKdb" class="center-inner-core"><!--pnid:RghcYujxLe3SxKGpcsT0M9-->
+                <span data-page-node-id="5HRlDSpIUVoto0FOww9KwZ"><!--pnid:OTcVgjwSG6irfsjiDgFCsC-->信披与报告</span><!--pnid:PQrS6hTRgPuA6WJUA33Pe7-->
+                <span data-page-node-id="6KbQhVhOhNKOkG5fhLtUQl"><!--pnid:l5MUDdPhhkAIOQMNYNJ6js-->管理平台</span><!--pnid:C6HnLCUSR9vVX28o4vhtAo-->
+              </div><!--pnid:GyvSdtgVPunp6sDYFNoNBG-->
+            </div><!--pnid:GMFH4GU1ka8TGBRzVzCDmm-->
+
+            <!--pnid:XFTDVCLrIeikRi3wuM6CJf--><!-- 12 o'clock (top): label on top, arrow below pointing DOWN to center --><!--pnid:FGJBOsGzNkxzjhr2CxZiPh-->
+            <div data-page-node-id="F6OBHZH3xYV3TyCz0AhBqg" class="node top node-pos-top" style="z-index:2; position:absolute; display:flex; align-items:center"><!--pnid:6CeEGQSTMXhGJBIFmQvUxM-->
+              <div data-page-node-id="walccVvdomK78WA9NiMerL" class="label"><!--pnid:JXwnEizt4TPzsE1mvNG3Lf-->营运管理平台</div><!--pnid:WCQylLNN20jUYzvZGHtj9u-->
+              <div data-page-node-id="1LzUClZXySfCn0KoEYsGTp" class="arrow"></div><!--pnid:29qDhDiZwPgNBCuYCzBTAB-->
+            </div><!--pnid:bqOpxyeOuEynXU6LlDwWiD-->
+
+            <!--pnid:zpj9jks8CjGChnEYoEzR5b--><!-- 45° (right): arrow on left pointing LEFT, label on right --><!--pnid:FWErJmvxQlJWc7wkmgBt6a-->
+            <div data-page-node-id="9ixaeaHZUEeajA2LjLqsmI" class="node right node-pos-r1" style="z-index:2; position:absolute; display:flex; align-items:center"><!--pnid:7UIj48g6cYFUxwbed7VSkt-->
+              <div data-page-node-id="epHH8ctWbq7ggAO03ADig9" class="arrow"></div><!--pnid:3zIuilyamyqeq27FfczFFL-->
+              <div data-page-node-id="HKJ5KdlIf1rgotSK6Hfww0" class="label"><!--pnid:32yLkB2WPFDITEKSGFDeQk-->证监会</div><!--pnid:jRi1XsyyExSZeCjA8BvS8B-->
+            </div><!--pnid:DCDCxtBG4AmClfcGrefVsN-->
+
+            <!--pnid:DigonSeJ6lb4Ri5Q8t0owW--><!-- 90° (right, pulled inward from 350) --><!--pnid:dnplIGM3aqzcFD1soU21mG-->
+            <div data-page-node-id="qZHp8lHw7CEohNBBkurkBZ" class="node right node-pos-r2" style="z-index:2; position:absolute; display:flex; align-items:center"><!--pnid:eMEweRVVyUzDFGS4cNfuWc-->
+              <div data-page-node-id="VwjtYKTtZCFG54eJvV1I93" class="arrow"></div><!--pnid:B6LW5W0WRIDBqOzIaYF2TQ-->
+              <div data-page-node-id="HcsxwBoAgcgXjCcNqo5u90" class="label"><!--pnid:rJPb9wB1y0tCtCzCuKcFym-->中数平台</div><!--pnid:Mar73eVqnFlmrLbMh2VPfI-->
+            </div><!--pnid:FGxcsymMu0j1O8sks0xiLX-->
+
+            <!--pnid:OoxwrmdY4fxabElN7qsiae--><!-- 135° (right) --><!--pnid:VAhsqyvKCei55kiAtNLfWO-->
+            <div data-page-node-id="ZkeUowOdxqW1WtSbMaxNDC" class="node right node-pos-r3" style="z-index:2; position:absolute; display:flex; align-items:center"><!--pnid:GUtQB70tW58jsSDx91FtPD-->
+              <div data-page-node-id="qZTniYBPjOCXFJdk3RuzJl" class="arrow"></div><!--pnid:pqN4udTJFA81vjQMs0BwGK-->
+              <div data-page-node-id="kge5Ma261yvksDZRykdkWD" class="label"><!--pnid:rQeen2a4Nw0aD6a8yuKe4z-->公司官网</div><!--pnid:dc6tZSgwkgvupwLXPSa0FK-->
+            </div><!--pnid:irBKI7xCRRz9pDdeCiAmFA-->
+
+            <!--pnid:0J1HMaIAKu24tv8dbtTh7g--><!-- 165° (right, golden ratio for bottom arc) --><!--pnid:Do4RsPaX7gV2buH2DMVkVH-->
+            <div data-page-node-id="SgD8ApJkGzKPkoIVC4lyrG" class="node right node-pos-r4" style="position:absolute; display:flex; align-items:center; z-index:2"><!--pnid:psNdSxgruVoODkbM61RWZ2-->
+              <div data-page-node-id="PGRwEQhEhAfB077PvJMjes" class="arrow"></div><!--pnid:ZiasSsYtJuhq5ehUkB6tF5-->
+              <div data-page-node-id="Fy7IihV7WrDe8AakEqvxK5" class="label"><!--pnid:VlrGjhiGN3GHSSMHMPSbhO-->规定报刊</div><!--pnid:pC39n12AmLGNO54FnOH76Z-->
+            </div><!--pnid:NLP6CY8m6pz4Esnd8rirCH-->
+
+            <!--pnid:NpGDrNoER1HgDAWQeLhAPy--><!-- 180° (bottom): label on bottom, arrow above pointing UP to center --><!--pnid:SLOIkA7zBr2dz1v0ssstvd-->
+            <div data-page-node-id="DlFcXhDfmYifTvW1dEclZI" class="node bottom node-pos-bottom" style="z-index:2; position:absolute; display:flex; align-items:center"><!--pnid:McIiLZxEhzsQcVPQGTcE7U-->
+              <div data-page-node-id="ZRSrW9FuLnKt8pAJW0O1Kv" class="label"><!--pnid:nu9U3VLJEkgluuSmmuyqGq-->OA</div><!--pnid:2cyu0VecIPtiGPHGA2EbqI-->
+              <div data-page-node-id="PTUmIr8FXcmtMapJbpm7Dg" class="arrow"></div><!--pnid:Z1jWqHmqVqLJ5HmfEGEDY1-->
+            </div><!--pnid:9tKYOSPzjBIcuvAARyHtqG-->
+
+            <!--pnid:tpOlp4o52t2LRNsm2A5IDm--><!-- 195° (left, golden ratio for bottom arc) --><!--pnid:AE5gYPCXPQWPDhW1sexzGm-->
+            <div data-page-node-id="8o9Hoj6HSKlSWtKUxJ0UeH" class="node left node-pos-l4" style="display:flex; align-items:center; z-index:2; position:absolute"><!--pnid:GYPgC9GlACYpvXFqAmXGsO-->
+              <div data-page-node-id="q3VR1QwCCIVBVwVxY9VrfG" class="label"><!--pnid:UB32KbC00X0LKM5U66hz8C-->风险绩效平台</div><!--pnid:EPtGiJWMk6UVzTBsYfagmO-->
+              <div data-page-node-id="VZzQuypjXfA7yLeMQw2UEr" class="arrow"></div><!--pnid:zbnPIShencOUvu3U7EO1yR-->
+            </div><!--pnid:j6HMQUFM1hb2AUxH2hUN2v-->
+
+            <!--pnid:KSInds6mtAStkqSroZZ3TW--><!-- 225° (left) --><!--pnid:pbmtacRXn2dKh0nD709iAa-->
+            <div data-page-node-id="D0ToJBOAg2gOd38DDJdrIA" class="node left node-pos-l3" style="align-items:center; z-index:2; position:absolute; display:flex"><!--pnid:KhL3VGhfHrHycXchb28c25-->
+              <div data-page-node-id="7VpJHkjOI6btIz83EbAbEc" class="label"><!--pnid:XZsAKlAfvB2upk12uJs6El-->客户关系系统</div><!--pnid:GnzDFmyDhrnW0NQvMvTh61-->
+              <div data-page-node-id="DrDh3FEkROylCgsNpzhyjd" class="arrow"></div><!--pnid:dpLqM0KvdlSOVsKTV4dEzP-->
+            </div><!--pnid:pAB7siv6jNByk4qnMry8n9-->
+
+            <!--pnid:h55dZ7LDhqWAiXfQtkioN0--><!-- 270° (left, pulled inward from -350) --><!--pnid:GpIj7DjDaZxHGAU6TIyrPl-->
+            <div data-page-node-id="nOpCwtA9kzheLVVwiqf7XK" class="node left node-pos-l2" style="display:flex; align-items:center; z-index:2; position:absolute"><!--pnid:Ds736Cc1WUWP35hyTZPu61-->
+              <div data-page-node-id="RMwlPNhewKeLPy54hpQEI2" class="label"><!--pnid:17xpjL89DWW5vATTFez4xg-->数据中心</div><!--pnid:KcY7sdsgqu6XZrrbZOwWUH-->
+              <div data-page-node-id="8iVrAV0b6womxu6LbJPpJT" class="arrow"></div><!--pnid:YlzBrlpeiAaJRnRuHyhglX-->
+            </div><!--pnid:s8o5a1AkohgHiZE96c12RL-->
+
+            <!--pnid:KTZZqW8xuNYT9H5M9iAPMD--><!-- 315° (left) --><!--pnid:katAeHnFxzVgphHKun2Wdo-->
+            <div data-page-node-id="jHgBhyGW0oDA1gQaPXqpli" class="node left node-pos-l1" style="position:absolute; display:flex; align-items:center; z-index:2"><!--pnid:MfR2IiJ8ECHW02oH3rst9w-->
+              <div data-page-node-id="ihkJXGSFMtEM6yKz8nHpNm" class="label"><!--pnid:uH922C4gWSq59psHYtlHHi-->产品中心</div><!--pnid:WiAuk2xrBlUHaoGL5VVock-->
+              <div data-page-node-id="KcEcVXFhzKrOK9fQRomDQH" class="arrow"></div><!--pnid:fuImZ3EFsUiPvmdWab3jBA-->
+            </div><!--pnid:ydcdGW5aPGZsyVBMhhBvGa-->
+          </div><!--pnid:kUgtsz3MYS7vTzxYvc8bSL-->
+        </div><!--pnid:FiFTNRI91VW8C7oMnKBGjC-->
+      </article><!--pnid:e99dnvHm2CXKCeWVnWpJEB-->
+
+      <!--pnid:kGy3sAKa2KDK4KRp22PI3g--><!-- 产品任务日历 --><!--pnid:Q3ptFySzgX9CqPnYuwIZSO-->
+      <aside data-page-node-id="Wk28YTkXWlY7JGlv1ANMnN" class="card calendar-card"><!--pnid:sCGSwEteqCKcbhdN95pA8G-->
+        <div data-page-node-id="6ybqfO0bmicMjkrXuKeoRx" class="card-header"><!--pnid:tmVGhrgya9WuaPl34SgbjG-->
+          <div data-page-node-id="3ktFJ4GHihc4KcGBLsEAmq" class="card-title"><!--pnid:rReFyGFHTJqiZ7D8foPehp-->
+            <div data-page-node-id="FuuEUiq1ELBo79BzYiuHQG" class="card-title-icon"><!--pnid:M9Gu0jywu3xWRPTUJa6x0w-->📅</div><!--pnid:Fsnk6OQU3OxlfXPDsSFYSV-->
+            产品任务日历
+          </div><!--pnid:ROt2iMe5jbihsD1kMkL7XU-->
+          <button type="button" class="calendar-edit-btn" id="calendarEditBtn" title="日程管理" aria-label="打开日程管理">
+            <svg t="1780984782881" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4834" width="200" height="200"><path d="M783.673469 929.959184H177.632653c-45.97551 0-83.591837-37.616327-83.591837-83.591837V240.326531c0-45.97551 37.616327-83.591837 83.591837-83.591837h407.510204c11.493878 0 20.897959 9.404082 20.897959 20.897959s-9.404082 20.897959-20.897959 20.897959H177.632653c-22.987755 0-41.795918 18.808163-41.795918 41.795919v606.040816c0 22.987755 18.808163 41.795918 41.795918 41.795918h606.040816c22.987755 0 41.795918-18.808163 41.795919-41.795918V438.857143c0-11.493878 9.404082-20.897959 20.897959-20.897959s20.897959 9.404082 20.897959 20.897959v407.510204c0 45.97551-37.616327 83.591837-83.591837 83.591837z" fill="currentColor" p-id="4835"></path><path d="M498.938776 563.722449c-9.926531 0-19.330612-4.179592-27.167347-11.493878-11.493878-11.493878-14.628571-28.212245-7.836735-42.840816l31.346939-66.873469c9.926531-21.420408 23.510204-40.75102 39.706122-56.946939l272.718367-272.718367c26.644898-26.644898 72.097959-25.6 100.310205 3.134693 28.734694 28.734694 29.779592 73.665306 3.134693 100.310205l-272.718367 272.718367c-16.718367 16.718367-35.526531 29.779592-56.946939 39.706122l-66.873469 31.346939c-5.22449 2.612245-10.44898 3.657143-15.673469 3.657143zM854.726531 135.836735c-6.791837 0-13.061224 2.612245-17.763266 7.314285L564.244898 415.346939c-13.061224 13.061224-23.510204 28.212245-31.346939 44.930612l-27.167347 57.469388 57.469388-27.167347c16.718367-7.836735 31.869388-18.285714 44.930612-31.346939l272.718368-272.718367c4.702041-4.702041 7.314286-11.493878 6.791836-19.330613-0.522449-8.359184-4.179592-16.195918-9.92653-21.942857-6.269388-6.269388-14.106122-9.926531-21.942857-9.92653-0.522449 0.522449-0.522449 0.522449-1.044898 0.522449z" fill="currentColor" p-id="4836"></path><path d="M621.714286 497.371429c-5.22449 0-10.44898-2.089796-14.628572-6.269388L532.897959 417.436735c-8.359184-8.359184-8.359184-21.420408 0-29.779592 8.359184-8.359184 21.420408-8.359184 29.779592 0l73.665306 73.665306c8.359184 8.359184 8.359184 21.420408 0 29.779592-4.179592 4.179592-9.404082 6.269388-14.628571 6.269388z" fill="currentColor" p-id="4837"></path></svg>
+          </button>
+        </div><!--pnid:OicDVOVfNgZGrtHF8FHiAA-->
+        <div data-page-node-id="yAutsiYUfGfAovRoN1jsdl" class="card-body"><!--pnid:hMeGOntCJ55YzOlKOA43YQ-->
+          <div data-page-node-id="mYJplSn9SOsaah7JeHVcKw" class="calendar-nav"><!--pnid:qqYZpsIBX3UMSETMQNfFfd-->
+            <div data-page-node-id="Z7MWzL5fN0VruausynqAFx" class="nav-arrow"><!--pnid:vPXWKgvg6w8F7mBLUsvGTL-->‹</div><!--pnid:yrhDP3GIqGbt7wFNkGUxWm-->
+            <div data-page-node-id="ayxH8bDy5yX9nvwbrHwPS0" class="month-title"><!--pnid:DuDZv1yNf4AmKb8wRTt88L-->2026年06月</div><!--pnid:Yx1xQWY3etCWD3ntavAfA3-->
+            <div data-page-node-id="eqrulLmfrvqYopWF1GUioB" class="nav-arrow"><!--pnid:7Cj0NZ46BmqvtTfxkjaDoF-->›</div><!--pnid:V4JrFnEfZTtqYUtLbKj1Yl-->
+          </div><!--pnid:l6dMjjmGXfgJAI1AMLNwUz-->
+
+          <div data-page-node-id="4DGI76s9octYfRfRiSQyf8" class="calendar-grid"><!--pnid:Vm1EjzaNCAhK1NkDdufNG4-->
+            <div data-page-node-id="OpSrVeJMXWXjXmaZA0vuON" class="cal-weekday"><!--pnid:2rQalO2maTgTKZpdZG7vQU-->日</div><!--pnid:xABDA6oevCk9YrraWIVOZc-->
+            <div data-page-node-id="nSHBKzQqqnKyeFMvZmElWr" class="cal-weekday"><!--pnid:O00VkyeGGb94oLajIhsxBn-->一</div><!--pnid:F4J652DPFD1mkXqCKZ7Vj3-->
+            <div data-page-node-id="pPOTn48WY09kBUa7gGBKM7" class="cal-weekday"><!--pnid:LrcsUWFAfRok5Wrejl5CDA-->二</div><!--pnid:5Oi7vtzH6emBp6bJRUTuIl-->
+            <div data-page-node-id="spbJVK92n4woY5lGmhkOhL" class="cal-weekday"><!--pnid:SzbhMcfN1P76cWn96P8gL2-->三</div><!--pnid:ylS0OnGPRxUQxUIsLrVbMH-->
+            <div data-page-node-id="IMShY0YbETO2Cv7gHTVLDH" class="cal-weekday"><!--pnid:NHPED02g71aYzG6dQB4kM0-->四</div><!--pnid:8vFlNaqntjuh4gwYFi3jaR-->
+            <div data-page-node-id="AVvsgNfOERn09nDdmfgHf4" class="cal-weekday"><!--pnid:7wyS3HTQmOdjgxpSmaEDwS-->五</div><!--pnid:DTykGCNmjY4pMiq0TZDEfW-->
+            <div data-page-node-id="uefE2THyBX9lrOglq2B7jM" class="cal-weekday"><!--pnid:PdwJBO7OWgbCHuM62Lwggm-->六</div><!--pnid:b3KaAxzAv5bdpPt9dwyhrJ-->
+
+            <!--pnid:WNq1gJQVkNaCQd23nijIXm--><!-- Week 1: May 31 (Sun) + Jun 1-6 --><!--pnid:JAcl62TEYIzOt2pjChi4fv-->
+            <div data-page-node-id="enPOaSrgxkCrC7Zw2DdfFp" class="cal-day other-month weekend"><!--pnid:EAJ0SYI6wKerUvfeLqEdTk-->31</div><!--pnid:9WNkDguDYpGC3FRpoB2NUZ-->
+            <div data-page-node-id="F5O9Nn8k9VfpWjlAToc7Zj" class="cal-day"><!--pnid:5V364neAnnFq0SikUgb1hj-->1</div><!--pnid:M64DwFh4iWiVfZOEPXhrJB-->
+            <div data-page-node-id="VMrFrY4wWYm9ilVBqsbyqq" class="cal-day"><!--pnid:Ok2epo3ZdlL5oMqId5UGhl-->2</div><!--pnid:oxuKTczJh5Ek4iPSvQitjG-->
+            <div data-page-node-id="kvMmyniENRNYIvgefWvn0e" class="cal-day"><!--pnid:6gaHXrSv1X69Q3PGeEDtyp-->3</div><!--pnid:TRkBQR34LilaDACfz6YsTp-->
+            <div data-page-node-id="GfWVrwtQD6dsXzG2T17N05" class="cal-day"><!--pnid:g9zpkSVWPipB7h2f2uHqNo-->4</div><!--pnid:IOiXxFGUxbwMQGULEdU63V-->
+            <div data-page-node-id="sda3XIWyoU4HFN7LhRj3EH" class="cal-day"><!--pnid:4GAZXC2G0zLZpY9vATByQg-->5</div><!--pnid:YwIMfLCbnLw7XHiYXdk8Af-->
+            <div data-page-node-id="vS9XMqwGWyGoVAhfGJ1slw" class="cal-day weekend"><!--pnid:zJdS60vGT0AdUha7lFrfG7-->6</div><!--pnid:VsW6IEbApNx4PNBp64Rpml-->
+
+            <!--pnid:D8homuP2zz3LgBgPH3SnQ7--><!-- Week 2: Jun 7-13 (today=8) --><!--pnid:syw4t3jK9fSl6CcvZx4UHA-->
+            <div data-page-node-id="AjFvAeR9nenskb9fbCSIP8" class="cal-day weekend"><!--pnid:xl0xrCk6FqAH7fvaaiK33z-->7</div><!--pnid:VnYIEeuqwNkPZF2rXrgdhh-->
+            <div data-page-node-id="JF44RT6AdaQ6dU52HGNdnt" class="cal-day"><!--pnid:tOx40yNZZeeXe1FIrjPAsf-->8</div><!--pnid:jAcvwYSodumizcNN5eC29Y-->
+            <div data-page-node-id="4OCSTlKbpx9ZozQz7BH5HB" class="cal-day"><!--pnid:JFHuVquNB75Zqs8mjXMFVD-->
+              9
+              <div data-page-node-id="oNeWdotX5YaxNv09PurpA" class="dot-row"><span data-page-node-id="oNeWdotX5YaxNv09PurB" class="cal-dot dot-purple"></span></div><!--pnid:oNeWdotX5YaxNv09PurC-->
+            </div><!--pnid:dTrLmJBFJNPnY22WsWsHEp-->
+            <div data-page-node-id="PTbiAICzmaARvAVMMnMFOK" class="cal-day"><!--pnid:Z4azlorBgSYWA6Q5yB9bDE-->
+              10
+              <div data-page-node-id="uRTIdWxPzvOgyd63BBsi1K" class="dot-row"><span data-page-node-id="KNrspu0skwA5PytAF9rhtp" class="cal-dot dot-blue"></span></div><!--pnid:AFpg95Z5Kk7oDPODH17uGL-->
+            </div><!--pnid:pLL8EpiRz32YDb37s5upo5-->
+            <div data-page-node-id="OphoG7xOrx3Gyssv4zvH3s" class="cal-day"><!--pnid:00vzaBOdwPFkcsJmLKc0ba-->11</div><!--pnid:GhK0Yoga0zowBFrznbigxd-->
+            <div data-page-node-id="tAAsbjmREU3at3Vf0Ctw8V" class="cal-day"><!--pnid:BIk3FRw2d85wG5IEeyl0Oj-->
+              12
+              <div data-page-node-id="IQmUV6xHTDknHWGzKZjv2O" class="dot-row"><span data-page-node-id="Gprf6YezVDswYvIxHgOGzh" class="cal-dot dot-green"></span></div><!--pnid:GVh8dGYQbcEsUmAoq77z7f-->
+            </div><!--pnid:9mkCT8P3TZKvAHKOEDRlAq-->
+            <div data-page-node-id="yLe1sJbF83Pk2edai7qGt0" class="cal-day weekend"><!--pnid:VIveNHuVQtGXhr4EbzSjDB-->
+              13
+              <div data-page-node-id="oweUH5f7eR4lLkeQAxFb1H" class="dot-row"><span data-page-node-id="jjohjBsyhz7zVw64CdxUEc" class="cal-dot dot-red"></span></div><!--pnid:v8rE9DWNUw4xEXgfUQmUti-->
+            </div><!--pnid:UrUp1P1JQRVCxfcbtET9ZW-->
+
+            <!--pnid:Yxz7m08b6F5wu1DbFAhBw0--><!-- Week 3: Jun 14-20 --><!--pnid:1zbcTyZHSQCepY3357uPTU-->
+            <div data-page-node-id="cesWNSgRCnoFdxHVrzA6ZA" class="cal-day weekend"><!--pnid:I70tmAgNDaAqqzMQeOmNFb-->14</div><!--pnid:2jqjMAsqXGBoSjN5XpNRap-->
+            <div data-page-node-id="Vr4ALGDiaMdwbUs7vG89Qm" class="cal-day"><!--pnid:7HgNWnoek3QYA2h5ZGx7ot-->
+              15
+              <div data-page-node-id="oNeWdotX5YaxNv15GreenA" class="dot-row"><span data-page-node-id="oNeWdotX5YaxNv15GreB" class="cal-dot dot-green"></span></div><!--pnid:oNeWdotX5YaxNv15GreC-->
+            </div><!--pnid:dXXi0OznjCieOJXwuDxvpQ-->
+            <div data-page-node-id="MihrOq3xJ9xrW6UNuDcJxD" class="cal-day"><!--pnid:9Rg9pM2CziJ1wY4ANd3mLp-->
+              16
+              <div data-page-node-id="mbXuJFFghixJkp4tWnGn7u" class="dot-row"><!--pnid:gGWRXv4I2oUGdAHC3w36Bl-->
+                <span data-page-node-id="SsKu5QDdgkfKbG8oMXVefC" class="cal-dot dot-orange"></span><!--pnid:B8YGmtyW3wRsfkCt4mA1V9-->
+                <span data-page-node-id="mEJ7Bx15D4nu8VxamHg8Qz" class="cal-dot dot-blue"></span><!--pnid:pEwAticfTSATXyq9vEr6AZ-->
+              </div><!--pnid:izOK3SIchgJcJxGB7mLWJI-->
+            </div><!--pnid:F0sz2EqIFIL5FEnpmCknds-->
+            <div data-page-node-id="AcMzf7b6wxZBMcubFEyHYl" class="cal-day"><!--pnid:6gltbNMTtZEH91P9XlsXrM-->
+              17
+              <div data-page-node-id="oNeWdotX5YaxNv17BlueA" class="dot-row"><span data-page-node-id="oNeWdotX5YaxNv17BluB" class="cal-dot dot-blue"></span></div><!--pnid:oNeWdotX5YaxNv17BluC-->
+            </div><!--pnid:JE4CeoYY76JPair7L8ZY9m-->
+            <div data-page-node-id="H5ar7BmR7SQfvK2AQhCFni" class="cal-day"><!--pnid:jjEE25wGLuOetatH56ePIA-->
+              18
+              <div data-page-node-id="n08D6T7soCsBaYG6KftxEE" class="dot-row"><span data-page-node-id="GYEBE5t1M03GUZKAGSo1b4" class="cal-dot dot-blue"></span></div><!--pnid:vFZyo1dc4fOE38B6nUTKfm-->
+            </div><!--pnid:ABoz1ovQGMy24ba6bIkxf3-->
+            <div data-page-node-id="gWwahdcEu5fW6aw7s55xCx" class="cal-day"><!--pnid:k4nMwItdGBokdjjxbnDeGv-->
+              19
+              <div data-page-node-id="JJZYN0OMWJY0MQZyIR3lac" class="dot-row"><span data-page-node-id="xo3YBeFsiNK0D0bnArCA2y" class="cal-dot dot-orange"></span></div><!--pnid:oxbX2RrF27taGCNufIRGeU-->
+            </div><!--pnid:G4kvVPCN7cUkSPCNT12w9G-->
+            <div data-page-node-id="ikdidkhvqt47hveU4PaB64" class="cal-day weekend"><!--pnid:Zypmx0VqMH4WBA9n2GMhYN-->
+              20
+              <div data-page-node-id="g37agWmelmZnyBtgkRniA8" class="dot-row"><span data-page-node-id="kH8wCYMF7oakzFwhzlEfvE" class="cal-dot dot-red"></span></div><!--pnid:bkQn5hHuwDsqNqvmD6DOht-->
+            </div><!--pnid:FTrdU95g11BFhYQO7nUdti-->
+
+            <!--pnid:FFCddyo8MJ2BFzMv7V0jTV--><!-- Week 4: Jun 21-27 --><!--pnid:cDupnyJBTWkTmGROFf8HLD-->
+            <div data-page-node-id="9FvtRPP1xWMkczXPEQ37Y0" class="cal-day weekend"><!--pnid:B1W2m2Krasu59kQOcDBi4b-->21</div><!--pnid:vVFN1hnE4uTOVAfgCu91U8-->
+            <div data-page-node-id="Oi9czrG0yj7IhQ4sPtHEJY" class="cal-day"><!--pnid:cCpmjTFG8PAkwDfMWb0k9S-->
+              22
+              <div data-page-node-id="oNeWdotX5YaxNv22GreA" class="dot-row"><span data-page-node-id="oNeWdotX5YaxNv22GreB" class="cal-dot dot-green"></span></div><!--pnid:oNeWdotX5YaxNv22GreC-->
+            </div><!--pnid:MhpcTlQwwWDoUzvLH1UCf9-->
+            <div data-page-node-id="AXIHOcvCcgSFV2hc0cIGcb" class="cal-day"><!--pnid:31gB4ohGckrFFMdrYSnRSV-->23</div><!--pnid:xctBVAvIhzEMK2PAQUsQYu-->
+            <div data-page-node-id="AlbysiOr2nm2dpDUqACUnC" class="cal-day"><!--pnid:p03OEEoEwhK1XFaIiACSAU-->
+              24
+              <div data-page-node-id="OWCuZuF3gb3dLPGWn8HGcB" class="dot-row"><span data-page-node-id="CLwQFlSHaFcP6hxw2HEfhf" class="cal-dot dot-blue"></span></div><!--pnid:ZdKWF7OC3SYWGytiYxv18i-->
+            </div><!--pnid:yEEGd0fMCl6HHOODu5Bq28-->
+            <div data-page-node-id="UANQMMEeUbLZJciHQAJORc" class="cal-day"><!--pnid:G8RKTCyAR66rnqSYevsTeu-->
+              25
+              <div data-page-node-id="oNeWdotX5YaxNv25RedAA" class="dot-row"><span data-page-node-id="oNeWdotX5YaxNv25RedAB" class="cal-dot dot-red"></span></div><!--pnid:oNeWdotX5YaxNv25RedAC-->
+            </div><!--pnid:NYtcLVF3xI3xx8kCMZGmlS-->
+            <div data-page-node-id="1N1BJkn7xFGcDyZe7IAVoN" class="cal-day"><!--pnid:hgpGMjjqSwXu0v59K2SmdH-->
+              26
+              <div data-page-node-id="LuQlZ6a4MnmDZXAUPMuK7T" class="dot-row"><span data-page-node-id="6lE1bTZ83UGN9QeqvSfCyw" class="cal-dot dot-green"></span></div><!--pnid:UrBzrpgivQ4CiUJ8AaisxS-->
+            </div><!--pnid:oZr0v42r0m9Bx3GkeMFtYK-->
+            <div data-page-node-id="9pBoX5dW9m9R0qDjzyTena" class="cal-day weekend"><!--pnid:mZHzukIF1mEyeB0rZ4che8-->27</div><!--pnid:YgVRpxsbbmrPomyyGFE3X3-->
+
+            <!--pnid:QI18BpwlfDIOarsltQADxU--><!-- Week 5: Jun 28-30 + Jul 1-4 --><!--pnid:KkFu6ow3JYcZd4aVIChNMM-->
+            <div data-page-node-id="v0a2RXAXXUrKVAFBV81gF2" class="cal-day weekend"><!--pnid:0f8cFwk5uMR4jnFmF4YKXX-->28</div><!--pnid:HzNXFZL34ZOB9BkIHjG3jx-->
+            <div data-page-node-id="u3Al0Yi1B7y2A2kcdDimM3" class="cal-day"><!--pnid:NE5Kdyx6tybkDJUSN7xs6W-->29</div><!--pnid:tqhbRLseSe8RbHSzdSlgwq-->
+            <div data-page-node-id="3piflEmzW81fFE72zODk0H" class="cal-day"><!--pnid:8t5taHEKKe9G6rM2Ay69fs-->30</div><!--pnid:mnEF6xRNdNuD4MmLlotRoY-->
+            <div data-page-node-id="0e5UVfIsWdCKzddEgtK6A7" class="cal-day other-month"><!--pnid:Mcy5izb7HeNSgE7hPK5EfB-->1</div><!--pnid:Gc6GlpnyNT4UqyS96ubjSD-->
+            <div data-page-node-id="LJ2GpuQzhWsT5XYGnozAfR" class="cal-day other-month"><!--pnid:3s581HmAXgF6G4f4wunHA2-->2</div><!--pnid:UN3Gu7pgKJaNsEmA1w1SBU-->
+            <div data-page-node-id="usrWYMppKyT9u9rPPvlNBD" class="cal-day other-month"><!--pnid:uTvJbj7vEk0U46QGwi1PgI-->3</div><!--pnid:1HjGUsL2HqIQVgrI4nwQPC-->
+            <div data-page-node-id="tRcDg4nI5wn4jFe6z1QJsn" class="cal-day other-month weekend"><!--pnid:knfjyLDHD63G3ffnAHhLXx-->4</div><!--pnid:RCSndWECsyNxMxO09mb4BR-->
+          </div><!--pnid:VD5fCibP8U0Om65zzCWJS2-->
+
+          <!--pnid:022asmqe0C4YTvzyQVWTNT--><!-- Legend: 3 columns × 2 rows --><!--pnid:VW7FlxZXsJVYoqSwbr6tpV-->
+          <div data-page-node-id="fZdFwtFebXiixWPVco44On" class="calendar-legend"><!--pnid:HWVD8OwgIITiZsgcKxz7Ez-->
+            <div data-page-node-id="zdlzWCm7f0NfCT9bLFF4fH" class="legend-item"><!--pnid:EdHqHOp1nJrT1gLTnfJsSI-->
+              <span data-page-node-id="q1nyAdL0ZZLEVq2ahCFJVa" class="legend-dot legend-orange"></span><!--pnid:IVQ74BsPJDCtF4xipLACyp-->各市场节假日
+            </div><!--pnid:hqUB25LL8gdmCMEpp0DpPv-->
+            <div data-page-node-id="6z5nWW8EvdZjfeaT1iWuk4" class="legend-item"><!--pnid:n4e3QDcihJ2tJbGHt0xh3x-->
+              <span data-page-node-id="KNd41d2K4Ogl3qTzUxLARS" class="legend-dot legend-green"></span><!--pnid:ASWm39NAuMvAonZO0KuTKu-->产品募集与上市
+            </div><!--pnid:soSwoL4TZL32PQpnnYNUA1-->
+            <div data-page-node-id="Q5GWzKyplp4oEfEJoFr1Rq" class="legend-item"><!--pnid:S7LdKAbA5hLTiD55TYiIyC-->
+              <span data-page-node-id="lEqUqxqDqcefj4qQbZprDS" class="legend-dot legend-blue"></span><!--pnid:7AerO062IXh86bWnflrlqy-->产品开放申赎
+            </div><!--pnid:G4ZzIGaxvZ9xluAC6Iej15-->
+            <div data-page-node-id="7M0M4C6KJLKhnARrVTkfyM" class="legend-item"><!--pnid:qAAYDa6wMubdXENXspxhZs-->
+              <span data-page-node-id="myjvNEXolvmy3AtYhF6Yz3" class="legend-dot legend-red"></span><!--pnid:efHkd3AauJhZ97p1qAlelb-->定期披露
+            </div><!--pnid:hIxchW9NXJ7iYvrfPEXevI-->
+            <div data-page-node-id="yAE06QhkzDfZwDrtGKBj6F" class="legend-item"><!--pnid:8L80czQOVwH2gW1mDmpFrn-->
+              <span data-page-node-id="s8bwxCIpMkA5OUvkHbxgqA" class="legend-dot legend-purple"></span><!--pnid:58XTEWwmPGCk9UAk4edG5R-->手动创建日程
+            </div><!--pnid:Oyg8VPh1kjl7vzJsW9TvQK-->
+          </div><!--pnid:qsDy8zHKl4e6sDV9G3Z2Mr-->
+
+          <!-- Reminder popover (calendar day hover) -->
+          <div class="reminder-popover" id="reminderPopover" role="tooltip" aria-hidden="true">
+            <div class="popover-arrow"></div>
+            <div class="popover-header">
+              <div class="popover-header-row">
+                <span class="popover-date" id="popoverDate">--</span>
+                <span class="popover-count" id="popoverCount">--</span>
+              </div>
+            </div>
+            <ul class="popover-list" id="popoverList"></ul>
+          </div>
+        </div><!--pnid:lBDfMN31PQwfB6LEJOyFty-->
+      </aside><!--pnid:Gj2jen5qMmAWD2JKCur13A-->
+    </section><!--pnid:xWgWFmUomTEWZYGmrUpos6-->
+
+    <!--pnid:rsgRGufgqa5ShgACg0N2Sz--><!-- ===== ROW 2: 信披重点事项（通栏横向时间轴 — 待办提示已上移至 Row 1 黄金区） ===== --><!--pnid:pUT76OEXlA1aRNdueY7I8J-->
+    <section data-page-node-id="row2TwoCol" class="two-col-section">
+    <!-- ===== TIMELINE: 信披重点事项（单流交错横向时间轴） ===== -->
+    <section data-page-node-id="qYYWTCwYlousk4I82QsBMf" class="card timeline-section"><!--pnid:urNEzlPt4fTaqFBliSVEpm-->
+      <div data-page-node-id="fxwhHwATUTUNAWBJFd7Bgt" class="card-header"><!--pnid:51mG8FWOaMq5qDDR6EJi8k-->
+        <div data-page-node-id="dfrMdobnsxOdQBPc2tKA0d" class="card-title"><!--pnid:G1kgUg4dzuIDMmKHo2B7bA-->
+          <div data-page-node-id="EWtazpF1CxYSH4VWbgKAjs" class="card-title-icon"><!--pnid:EIQvCkTW5HziP57GBg2uju-->📈</div><!--pnid:VvGusUGge9kvMYHhn3CqXJ-->
+          信披重点事项
+        </div><!--pnid:Ku1s3YsuJ4Hnk1CGcShpkp-->
+        <div data-page-node-id="zp6n8gBD3wqxVrGJACZmsF" class="date-filter"><!--pnid:e5NmgALxZA8y6ZohAOcBLX-->
+          <span data-page-node-id="cE2MDdaLbJ9dmU5MUETP6E" class="date-icon"><!--pnid:NwwgH5FfPVX3SK38Tk4G1e-->📅</span><!--pnid:P5VrhQ6k5td9GcGot6Sj3Y-->
+          <span data-page-node-id="aWEVZudaEww1FvCK5IqC9x"><!--pnid:vyJLeNXk5pGIG391BuDw2p-->2025-06-09 - 2026-06-08</span><!--pnid:OGiY7L63ZMWLHCCu4aprvV-->
+        </div><!--pnid:LTSwXBBLYqLnj9dTXAnHXR-->
+      </div><!--pnid:0CWEHnLBENtPebfZC7WkyB-->
+      <div data-page-node-id="NNzvHZAcIwHqvHUq9YFa61" class="card-body"><!--pnid:cHQgoqo9z3zu45zPuVRcuu-->
+        <div data-page-node-id="f9uzgnZIs5p6LI0ldyCf9Z" class="timeline-horizontal-scroll"><!--pnid:ctSFWtiWHPI0aac6P7ORGP-->
+          <div data-page-node-id="soGbLEos62L64biohP28Ar" class="timeline-content"><!--pnid:1Iw8CUGmVvDODdWqBnF60M-->
+
+          <!--pnid:F3evU0trHKBCbyDu5q7DG0--><!-- 2025年07月 (上半轨 · 红色系) --><!--pnid:BFTNdXNA34NmQiGa1CLgyK-->
+          <div data-page-node-id="yNnyK64D6pT7Hd7bk8DsxI" class="month-group month-group-top month-jul"><!--pnid:sKCLSLGH7L8BHZWHuHCuZN-->
+            <div data-page-node-id="8f8VtPDwLuOL8D4yUO4D1V" class="node-rail"><!--pnid:LfTImPfVTOZJwmrHH93ubq-->
+              <span data-page-node-id="MWuEIVs0LH24IMs0VzFy5i" class="solid-dot"></span><!--pnid:kZTF1Hh1h264gPvLOeMHi5-->
+              <div data-page-node-id="Yozma9V6KiuyuzFGcUBmhz" class="y-vertical-line"></div><!--pnid:uiGAzybitJkVSsFnMCNUTi-->
+              <span data-page-node-id="GJ4vOe26TahfTDmDV3vD7D" class="dot-anchor"></span><!--pnid:6EZsublW6WmIeQ1kjAtrDg-->
+            </div><!--pnid:uylmNW73PfNX8lxH46vukJ-->
+            <div data-page-node-id="5lIxdBDqFy77f62C0EOieE" class="month-body"><!--pnid:9mY21CCeJCIaWTXZgo7fOL-->
+              <div data-page-node-id="Cl20lsdzd583jqsHfGOviA" class="month-header-row"><!--pnid:00N4hpdMESticVdIHvSJ5V-->2025年07月</div><!--pnid:TKIz4nkCKy0xQfvMelsiY1-->
+              <div data-page-node-id="z4GAuFLSjtMlbMqxbxM0M3" class="cards-container"><!--pnid:4cw4JUOYWROVSLhySQAHDa-->
+                <div data-page-node-id="LHfNjAyxV77CKQrT7rso5L" class="timeline-item-card"><!--pnid:1ejI95nXsS3obFUj1nA28Q-->
+                  <div data-page-node-id="9m8XCvokgeAO7FT8H4Qnb8" class="item-card-title"><!--pnid:oypkjBl2EsFr3VTZi1FwCF-->公司重大人事变动</div><!--pnid:Um9Cmswku70W9nfeDZVboW-->
+                  <div data-page-node-id="JK2VFnRG1a2hDQdZfPj2SE" class="item-card-desc"><!--pnid:D5Uq1r67d8aT2qOE6AAG2m-->2025年07月14日，董办通知：公司董事会审议通过高管人事变动议案，相关人员变动已按法律法规履行信息披露义务。</div><!--pnid:bFC2Ce3bNEJnIDD6SjLg8J-->
+                </div><!--pnid:pzG7BZaVX5BoafnvM0Z103-->
+                <div data-page-node-id="2n2m2FgFhPmlejxrb8PX2T" class="timeline-item-card"><!--pnid:AYchEixxkDhXGfmvEJiB3N-->
+                  <div data-page-node-id="hmmHQYN5WfjZGnrQ78AdUt" class="item-card-title"><!--pnid:BMvUElwFAdifYWmkfN0cC6-->公募基金2025年第二季度报告</div><!--pnid:KKh3sfWVKI6Z7Suw7W2EQs-->
+                  <div data-page-node-id="H7SErNwSO9j0T3Bk51g9we" class="item-card-desc"><!--pnid:4GsDcBlSgxcDOB23YBAobk-->2025年7月，公司旗下全部公募基金已完成二季报编制及披露，相关报告已通过规定信息披露渠道公开。</div><!--pnid:2EjK3cCzoqY3RAIi2Fj8xQ-->
+                </div><!--pnid:lnsC531ieJAbhRq2CbR11d-->
+                <div data-page-node-id="OTA7FG4AD69QCQwg0GrA4L" class="timeline-item-card"><!--pnid:dUCoTxwLeEfeYQBY3cKEmF-->
+                  <div data-page-node-id="kazABBFGkXUEyRer4ScbkJ" class="item-card-title"><!--pnid:2xhoRanWjtkQGdeuzT6NhR-->公司住所及注册地址变更</div><!--pnid:opB1KQ3QW0VbmZHhKymDis-->
+                  <div data-page-node-id="BBgxEekEXcWILGjEfEF9be" class="item-card-desc"><!--pnid:Om4GUYt0SuUWR0fRbUpNoq-->自2025年7月28日起，公司住所及注册地址已变更为新址，原地址相关业务已妥善迁移。</div><!--pnid:oiAIEyvgpX0XIOoKr77cB9-->
+                </div><!--pnid:MZJXAgygFrI59Wykte9mCX-->
+              </div><!--pnid:rOkdqElCYJUknCKtry4oQM-->
+            </div><!--pnid:IE2pF2kBDPt5HBQI5Xf4DZ-->
+          </div><!--pnid:hBIeRTPnAlyQg9IuY0Bly3-->
+
+          <!--pnid:ROjma6KA69vgYnOZc5T7ue--><!-- 2025年08月 (下半轨 · 金色系) --><!--pnid:7LNGkdAHGEq4OB6pV2TVhH-->
+          <div data-page-node-id="Lq0HtFNC7zrCQarg4FACnj" class="month-group month-group-bottom month-aug"><!--pnid:VicKaHrACVry945L545x9M-->
+            <div data-page-node-id="AvHVLnblH4TOO6P0SpDCUM" class="node-rail"><!--pnid:gRmko5GRaHpIlpsJdUwQW7-->
+              <span data-page-node-id="i4ZBGOhBxiDrptHx64Okf8" class="dot-anchor"></span><!--pnid:PCfrtDAJ1QH5FqU8yXcMF7-->
+              <div data-page-node-id="a8ICG2uPBeJmEzLMSNHp9g" class="y-vertical-line"></div><!--pnid:k1OOavm3X1wj6L99JSgcXZ-->
+              <span data-page-node-id="9HPCFzZDdOvcEPTeoaQARz" class="solid-dot"></span><!--pnid:8rn0HuBqfOGj1rEUUxlN23-->
+            </div><!--pnid:bBw43Zy8jGTzLecdRquUie-->
+            <div data-page-node-id="pcbr7nbMW60CUErlPEZdok" class="month-body"><!--pnid:x3apY3bp5cil27b5S1aodS-->
+              <div data-page-node-id="raWHl43sOz5QsdQtNLMbcQ" class="month-header-row"><!--pnid:L1mn43tyoJktaSIlca6Eyk-->2025年08月</div><!--pnid:2A647A4A5RKASwO93lRYde-->
+              <div data-page-node-id="1WeFfkDOcLdKABoLLp9CqN" class="cards-container"><!--pnid:SY1fA8rlzJkVMvqx47JaEN-->
+                <div data-page-node-id="JodO6JK1T5uyx5w89AkpOr" class="timeline-item-card"><!--pnid:bm3r1vYCh7qVbeXmJBCPV0-->
+                  <div data-page-node-id="Ly6OnAqQIuLInWso2YsIGM" class="item-card-title"><!--pnid:vQmCJdjZcMY88mNBHFOCDA-->澄清公告</div><!--pnid:AU3c0AFzBlxy1kKAXHsDSQ-->
+                  <div data-page-node-id="galNZWTlPqQMc1P7ejbPI0" class="item-card-desc"><!--pnid:FAi87QjsCkDt683aWsOFc6-->因近期发现有不法分子冒用汇添富基金管理有限公司名义从事非法活动，特此发布澄清公告，提醒投资者注意辨别。</div><!--pnid:q6lUAHRhPDdRYTnHEAonFm-->
+                </div><!--pnid:djU4P7NSRVE5QFlKkpopQJ-->
+                <div data-page-node-id="SlaKiQP07GWjP5getj6vOq" class="timeline-item-card"><!--pnid:xSBvq0R8uS7vFamim4BvGU-->
+                  <div data-page-node-id="TkmZDRFVu63ciZX9a5iBMc" class="item-card-title"><!--pnid:K4F69VBMrM6hTuCoEltXAO-->公募基金2025年中期报告</div><!--pnid:zuLCouwRZrGRHFAWHtkub4-->
+                  <div data-page-node-id="GizljYsta8o04Z2qF5imKo" class="item-card-desc"><!--pnid:YTlvNtHwuuL47mzELgep3d-->2025年8月，编制及审核：公司旗下公募基金2025年中期报告已编制完成并按期披露，详细数据请查阅公告原文。</div><!--pnid:XsAaPkp4hCyOaTInVK6IYf-->
+                </div><!--pnid:pCWcqyUKq0GrDhgCU2JsOG-->
+              </div><!--pnid:dVBORe4d9bcgL6TIFbLoni-->
+            </div><!--pnid:ZU0YO11VSy9JjcoDNLYx2m-->
+          </div><!--pnid:P0Tc9v6fpHeIW9c9K5QRFJ-->
+
+          <!--pnid:2JCTYklrFALExjYfHdpTHt--><!-- 2025年09月 (上半轨 · 青色系) --><!--pnid:LVuYWuI7sPhGIwNfgu8UFF-->
+          <div data-page-node-id="cGLrgKFwkPV8NESzCOvV3o" class="month-group month-group-top month-sep"><!--pnid:eqkgV43LJVuxqm8a08NBNm-->
+            <div data-page-node-id="b6a6N8XqvmzxY7bGuFhyXf" class="node-rail"><!--pnid:IgV4ePwPBDkBKuMPKaQzzJ-->
+              <span data-page-node-id="dwnAGCIEBI0MhJlWgl03gt" class="solid-dot"></span><!--pnid:20wzQsDIzHQwLYhdTGf19Z-->
+              <div data-page-node-id="4CLBI9tN7iKohKfpsHchL8" class="y-vertical-line"></div><!--pnid:AcVsHU8k4opFLVmhLEcVf6-->
+              <span data-page-node-id="0VmxF0Mm4zsVN4s7IC4buZ" class="dot-anchor"></span><!--pnid:fCCSgn0yS0bY9AokdAXRGw-->
+            </div><!--pnid:e07Ggk62g8wgMsnKgU4pZ5-->
+            <div data-page-node-id="kDqEWcZSZEGEPvLVstiURG" class="month-body"><!--pnid:G5cL6B6t7FylaPrv3S5eAA-->
+              <div data-page-node-id="5YMsEp7zBws99m56hWkgyK" class="month-header-row"><!--pnid:psHEG4eg8GiQRVdlZDe8MH-->2025年09月</div><!--pnid:s63ixDExOu5tCJe8eghoHH-->
+              <div data-page-node-id="nkgespqByB8aytQnX8D0wQ" class="cards-container"><!--pnid:3t7rzaXgmodyc5sJn5S2ch-->
+                <div data-page-node-id="9bZcWwOKxUVG9Y8po9VGan" class="timeline-item-card"><!--pnid:lAk3AjMiJWpbqmGgSfCQ4F-->
+                  <div data-page-node-id="LkRNXzx53WUgx1awH2hkLv" class="item-card-title"><!--pnid:frtXY5YFz8cxIK7uNWNKNm-->首次触发重大权益披露</div><!--pnid:267iZdQHfQF4d0dwUPQwsf-->
+                  <div data-page-node-id="nYfBOW6pDOpTWeLV7Cknaq" class="item-card-desc"><!--pnid:ql6lIlenku5Z1Kz5uqN8uN-->2025年9月15日，公司股东持股比例变动首次触发5%权益披露线，已按《证券法》规定完成信息披露义务。</div><!--pnid:xiKBQL0CBeDU4aL30BnRPA-->
+                </div><!--pnid:rQKkFiVx5xZjJ8jFYbLjVC-->
+              </div><!--pnid:oHPXZElZ3AefOsRKi9gXWN-->
+            </div><!--pnid:MBVUGkCesZ3dJl6JE5XIrj-->
+          </div><!--pnid:rQwSyGyru3jBGnfMvRFYbR-->
+
+          <!--pnid:CSGx5cLSWOb44bNFjYjsdm--><!-- 2025年11月 (下半轨 · 紫色系) --><!--pnid:YLKhs5wQFRmjGr4dNQMNcQ-->
+          <div data-page-node-id="zUjfhKRbGEI8vwcT8h7oHm" class="month-group month-group-bottom month-nov"><!--pnid:ZqZYqcstHBy9yc9AHtU6so-->
+            <div data-page-node-id="5ARbdFzvqQShfXY8qRJvsb" class="node-rail"><!--pnid:8K3XGnqBRGVmvPEGGRJ2XG-->
+              <span data-page-node-id="YQHxE1b9PuXeKBFEs00Gw7" class="dot-anchor"></span><!--pnid:1bye2sf87ypXXn1EZ7Wr0S-->
+              <div data-page-node-id="9qm2wBeqx488528HMdddiG" class="y-vertical-line"></div><!--pnid:FHMJTrPFbeBENyldLcP9uE-->
+              <span data-page-node-id="lmixdRO39VUMWbrmw6xwrL" class="solid-dot"></span><!--pnid:Rhk7QFmwy2oAjUSn0XIQze-->
+            </div><!--pnid:jTBSXGs6Xdvoe0erJ47qOB-->
+            <div data-page-node-id="4GanL25i3POIkj8gHmaPJi" class="month-body"><!--pnid:JTgiFfFHnVxHPhXx6RygtC-->
+              <div data-page-node-id="sWgKcpU2tlMWX6cUCH7Eot" class="month-header-row"><!--pnid:aGnKj4Snu4BPIQx8P0VnMK-->2025年11月</div><!--pnid:ZUJkY7HXJNenptezKGgSQV-->
+              <div data-page-node-id="bct3WZLICOXouACWbUWihm" class="cards-container"><!--pnid:gT0HPw3eVIL4x5f7H1kkxk-->
+                <div data-page-node-id="GdaUcRSHBN77QrpKNBGEIo" class="timeline-item-card"><!--pnid:OKufOIStfJVh7DhesSoJPI-->
+                  <div data-page-node-id="TiQJSxsYGZR02R2tQsgXa2" class="item-card-title"><!--pnid:aidHg9HPlXenJAqW09ENCH-->近期市场波动风险提示</div><!--pnid:MjiBD93uAzUGgXaifn7E8R-->
+                  <div data-page-node-id="jHRGg6J7XMnFBE0bmA3ihA" class="item-card-desc"><!--pnid:hzzaTknmLg2W3Dc18GYArI-->近期资本市场波动较大，请投资者理性投资，注意投资风险。公司经营情况正常，无应披露未披露的重大事项。</div><!--pnid:fS1ipHZZbByo4zz9LqOzJm-->
+                </div><!--pnid:FZMXQLyCkOLUMa9urYYtcK-->
+              </div><!--pnid:iDbPWuazxNycskViadTMCG-->
+            </div><!--pnid:rxJBThP7bNzR3arHFCAP8u-->
+          </div><!--pnid:MTufv9aj1H2rHMaBHlvk1V-->
+
+          <!--pnid:rjLT1FZoNT6XSkYmWcrKMX--><!-- 2026年04月 (上半轨 · 绿色系) --><!--pnid:HXPrd6oBdtGUoIua1Ba3cR-->
+          <div data-page-node-id="O4XQ16xEZfyVJYyQDKbG4I" class="month-group month-group-top month-apr"><!--pnid:q7KNC6rI5xIPFlscPVYMme-->
+            <div data-page-node-id="XNDG9q9ZdEFr1evxuclFWA" class="node-rail"><!--pnid:HCwfEy9XEYDlObspIxjV2J-->
+              <span data-page-node-id="wpMOnkrxBoThZbpEXD0S4d" class="solid-dot"></span><!--pnid:CbmPMviozmg2lFQRJytJ7u-->
+              <div data-page-node-id="xXf4lold51xGlyqLgLEruM" class="y-vertical-line"></div><!--pnid:951wVtYMKuDIMvEpwjJuaC-->
+              <span data-page-node-id="DIQfdfNhcIkBy4elz8uRlW" class="dot-anchor"></span><!--pnid:agzqSxZLj5iRCraI4OfS9W-->
+            </div><!--pnid:oAR9GOLg8o9oEtuXa9jCbM-->
+            <div data-page-node-id="KuxpxbyKp09j6lxYtio0y2" class="month-body"><!--pnid:dgr0Ocb0XJDoNZ77zqJF9C-->
+              <div data-page-node-id="Rnvr56pOyMRqUKgfzDjFJZ" class="month-header-row"><!--pnid:wpaGIrYvVGU7twAyDWIji7-->2026年04月</div><!--pnid:EQ0tcM47bPg1so9tFkxFY3-->
+              <div data-page-node-id="Ew1KcX6JTZS6jjl1QGqbo1" class="cards-container"><!--pnid:qtsEaUZDcm3pWWumwRzxie-->
+                <div data-page-node-id="x84j8THQBcAkc8iKcgnue6" class="timeline-item-card"><!--pnid:AQpJ6FXs8fNAfhSsPXtBrA-->
+                  <div data-page-node-id="wsJwxBONdeGrIdem2avgbC" class="item-card-title"><!--pnid:oD5ECOzCPSnfgsQmZFSvAl-->2026年第一季度报告</div><!--pnid:eEuREM5QYyCa6PWl9onhp8-->
+                  <div data-page-node-id="H0LE50yaXKfVGBnzUHUNtZ" class="item-card-desc"><!--pnid:vghwo9KYhZqEBxoJd0K4Ri-->2026年第一季度报告已于2026年4月28日完成披露，报告期内公司实现营业收入12.34亿元，同比增长18.6%。</div><!--pnid:sDR5bLiqgokZcC0YUKPEG9-->
+                </div><!--pnid:4lyri4L5ziGG3mLbjHaqgT-->
+              </div><!--pnid:VEGF2KSCElKmuHOdvBMPHT-->
+            </div><!--pnid:vVzZc8lnu7xNvdyIJc937x-->
+          </div><!--pnid:xBVfnXVc8w2lO3ijsXT4lq-->
+
+          </div><!--pnid:ybinCOQ4ZbnvSHGt8lhqdV--><!-- /timeline-content --><!--pnid:3Pllju1Hz3kVENtj3sma3y-->
+        </div><!--pnid:KkM5DIN1Kg04HTG9w3SpzA--><!-- /timeline-horizontal-scroll --><!--pnid:WQEhuabCZKOZKv9l1vVhgZ-->
+      </div><!--pnid:FLlAWzJxjoY77L6VnlRU2L-->
+    </section><!--pnid:TuMXAkK5UJHuqrMygqIUJO--><!-- /timeline-section -->
+    </section><!--pnid:row2TwoColClose--><!-- /.two-col-section (Row 2 通栏时间轴) -->
+
+    <!--pnid:5hvbum6VLW2D3TFLUoEbcQ--><!-- ===== DASHBOARD: 数字化看板 ===== --><!--pnid:9AOV69Bqm30sAGbfXWVgzP-->
+    <section data-page-node-id="qSxRNy2Y7jZKqGNwHbbHKv" class="card dashboard-section"><!--pnid:xTh8uizW9mD5ZyaitmaGjH-->
+      <div data-page-node-id="Ea8g6v997HyfeGB8ixXbeM" class="card-header"><!--pnid:gP9TueTDAWE8OHAEXkx6Vj-->
+        <div data-page-node-id="LRd0VccY3u1LF7eu9shMCX" class="card-title"><!--pnid:alRuBJZ20kexJAkGsQUpKf-->
+          <div data-page-node-id="Odm2p4iCtKDRS71mWOLguk" class="card-title-icon"><!--pnid:hHZbCQbKGbdA0AEhz9gV4V-->📊</div><!--pnid:b1kMsEcb0iu3h6Zt1yfY6X-->
+          数字化看板
+        </div><!--pnid:mQ5C7BkxoVAIPesdC7t4os-->
+      </div><!--pnid:SugT8FtbRhzzDyBpQk40jt-->
+      <div data-page-node-id="0Q2haU4PNgC5eRYLA2GcUw" class="card-body"><!--pnid:MvRClffYTR5nF1GkmB2Uku-->
+        <div data-page-node-id="aqxC5tbgVqDQtpU1pvGkAF" class="stats-grid"><!--pnid:TIkj7wBDQA7k71pEpNGCiR-->
+          <div data-page-node-id="64gvEX1iUzJMYH1cIFOfSr" class="stat-item"><!--pnid:s5G6OBKtsyxCwb1RHV3JxQ-->
+            <div data-page-node-id="mf47VLqVDK4pO8H9DRZ6Es" class="stat-label"><!--pnid:IrPJ741noEFzNMndgv70gg-->系统报送量</div><!--pnid:bF0bfSKfUDrTc4Hdx6yaSY-->
+            <div data-page-node-id="DMFpTIeUvtwtw3kbG24w0D" class="stat-value"><!--pnid:pqjvMN87pTi3tOEmk0aZa0-->3244</div><!--pnid:aowBtBgM9aExDgzk0qwXcI-->
+            <div data-page-node-id="9tg2EhE7ef7bfBo6BA1Iav" class="stat-sub"><!--pnid:PshiF4pwEfq9cPHymRqzzV-->截至 2026-06 累计报送条数</div><!--pnid:uuVkne8VT6LYWHvcup2qmR-->
+          </div><!--pnid:rKfmH4mzzlbr6plyEFMNFp-->
+          <div data-page-node-id="jdtVsaqVuuTmdT9Hz3HKEj" class="stat-item"><!--pnid:cubhENhxSRGOgDSGACDdME-->
+            <div data-page-node-id="TaPA1S11KOVeFjtaC47jKM" class="stat-label"><!--pnid:isM0Jd6arBIS6jnHkbE3uQ-->系统划款率</div><!--pnid:tCBJDElFSBsWHyHjkGIHaG-->
+            <div data-page-node-id="bQYYQynR3f3hCOnFva9YaV" class="stat-value"><!--pnid:JpUHDCX7FAhm5iHgDqXpYN-->77.87%</div><!--pnid:GDl9qSDqQZGReCvmkHLtT8-->
+            <div data-page-node-id="u9iG5Hhnku3eYQkqjRnAHJ" class="stat-sub"><!--pnid:i3sEOVz6ibPe9HNfNZWNyd-->截至 2026-06 划款成功率</div><!--pnid:msdeGyqnrimq9gKPoa7yUe-->
+          </div><!--pnid:PqFABBVTvuJcGlA9XMWTEH-->
+          <div data-page-node-id="M2TOD0aEvHF9NyOxKAUCE6" class="stat-item"><!--pnid:6wxpoSnyU0lJZZfgN7NyT6-->
+            <div data-page-node-id="YgDCjAJNjMHIOzUTpVfwGt" class="stat-label"><!--pnid:mbxaG6UrgTEXweIpbKZlLj-->某某好评新增数量</div><!--pnid:vx7DzcyIqGjSNFYtCY2WFC-->
+            <div data-page-node-id="tzQDzsXZEx5QL1AsQm7JmF" class="stat-value blue"><!--pnid:kTCMFkGgAkaWEh3NOR8FCO-->5</div><!--pnid:AtgMN206ADNaMqdFb0J9Gi-->
+            <div data-page-node-id="ajgO4FedViB7xLbkYURlHx" class="stat-sub"><!--pnid:40YTILzCtWJTDixDj35inB-->截至 2026-06 好评统计</div><!--pnid:qMvMZEZw2M8cM2at9oVVRi-->
+          </div><!--pnid:VanDg3L7YeVIbtJSogSVKJ-->
+          <div data-page-node-id="uEVlvgvMQqRH8M8LMtPM1V" class="stat-item"><!--pnid:4TrsTQmq4Gd3LvXUa3UcAV-->
+            <div data-page-node-id="s6FWsBghjT8I5029mChbMk" class="stat-label"><!--pnid:PSFxTpwbOJnklFsNV8DeAH-->某某好评减少数量</div><!--pnid:a7L9kSqRCSiyHeLLzlayzv-->
+            <div data-page-node-id="GpWGBDfBzZiWxNv4hbwFVm" class="stat-value red"><!--pnid:oLF7owdl2O2RMqwdEAvNIt-->4</div><!--pnid:Aj8rAdjBUFDkDnM82IKTSR-->
+            <div data-page-node-id="gEtZlzTh7RC86kK4ByIF60" class="stat-sub"><!--pnid:lfooJ1yXyi6Rwb5etR5qKV-->截至 2026-06 好评统计</div><!--pnid:Ee4HBcLPEjqtfukZb5Zkg6-->
+          </div><!--pnid:ngLT68l6U5dSkfvVPCL2JA-->
+          <div data-page-node-id="fhKR4OYvAgAVHRDGjmXzCn" class="stat-item"><!--pnid:IiBct3aH7D4MfTloE39IpR-->
+            <div data-page-node-id="7ckrkMTPPP8CtxYUJvURUa" class="stat-label"><!--pnid:WoDOMPtRfLBe5nHr7AqDfJ-->某某好评刷新数量</div><!--pnid:vWtbodjdC7RBzKP5OmRr2v-->
+            <div data-page-node-id="ENjhbwOFxVIqn0JCPvp4g1" class="stat-value green"><!--pnid:tBafDrkfS6eH8q8DgGwc3n-->8</div><!--pnid:5KZLWz6JJjaT9eCbiyMYni-->
+            <div data-page-node-id="DHfP5N4UPx31pRwCPlgzZT" class="stat-sub"><!--pnid:hMoUHxfuDo3gEpbi9prBlb-->截至 2026-06 好评统计</div><!--pnid:ACD22a3AbeyIDxyyIWNx0o-->
+          </div><!--pnid:YEGaF87qPfqLQHIYde8uL4-->
+          <div data-page-node-id="SqVhGjLUHETzOsApObAZd8" class="stat-item"><!--pnid:8fsjCFnykB1YTJEyAUsuXu-->
+            <div data-page-node-id="HuAoF9s7g4jVdgPynY1QR2" class="stat-label"><!--pnid:zEuqvN1TnXK9Yj1eS90WU2-->某某好评减少数量</div><!--pnid:phL825UDdd4vll4FF3hu58-->
+            <div data-page-node-id="wwKkWfODW9bOaiH0X1iHA6" class="stat-value purple"><!--pnid:bZ9FXyB1FYuw7WqqP3mYTy-->6</div><!--pnid:XsOeuzm15IIfxBVeHYez0l-->
+            <div data-page-node-id="WGQSqrdHuGzR3eQpotdSEO" class="stat-sub"><!--pnid:QtICdYjBd8bgFBxJTKhoSc-->截至 2026-06 好评统计</div><!--pnid:zArNikZbLGdw8ASUyPMbrr-->
+          </div><!--pnid:2bq5mQA4XdPrAyDZc3geXJ-->
+        </div><!--pnid:8BvtyBuCpqjWpxouhJlEKQ-->
+      </div><!--pnid:svvCuxNEqIqmwPdKQSotkd-->
+    </section><!--pnid:h4mT1VsrQ8uHOHbLyxUWFk-->
+
+  </main><!--pnid:BVGmUuEPy1DFCWiTwMuKNe-->
+
+  <!-- ===== SCHEDULE MANAGEMENT MODAL ===== -->
+  <div class="schedule-modal" id="scheduleModal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle" aria-hidden="true">
+    <div class="schedule-modal-overlay" data-modal-close></div>
+    <div class="schedule-modal-panel">
+      <div class="schedule-modal-header">
+        <h3 class="schedule-modal-title" id="scheduleModalTitle">产品任务日历</h3>
+        <button type="button" class="schedule-modal-close" data-modal-close aria-label="关闭">×</button>
+      </div>
+      <form class="schedule-modal-form" id="scheduleForm" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="formCreator">日程创建人</label>
+          <input type="text" class="form-input" id="formCreator" value="员工A" disabled readonly>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="formVisibleToTrigger">
+            日程可见人<span class="required">*</span>
+          </label>
+          <div class="form-tag-input" id="formVisibleToWrap">
+            <div class="form-tags" id="formTags"></div>
+            <button type="button" class="form-tag-trigger" id="formVisibleToTrigger" aria-haspopup="listbox" aria-expanded="false" aria-label="选择员工">
+              <svg class="form-tag-arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4z" fill="currentColor"/></svg>
+            </button>
+            <ul class="form-tag-dropdown" id="formVisibleToDropdown" role="listbox" hidden>
+              <li class="form-tag-option" role="option" data-value="员工A" aria-selected="false">
+                <span class="form-tag-option-badge">员工</span>
+                <span class="form-tag-option-name">员工A</span>
+              </li>
+              <li class="form-tag-option" role="option" data-value="员工B" aria-selected="false">
+                <span class="form-tag-option-badge">员工</span>
+                <span class="form-tag-option-name">员工B</span>
+              </li>
+              <li class="form-tag-option" role="option" data-value="员工C" aria-selected="false">
+                <span class="form-tag-option-badge">员工</span>
+                <span class="form-tag-option-name">员工C</span>
+              </li>
+            </ul>
+          </div>
+          <div class="form-error" id="formVisibleToError" role="alert">请选择日程可见人</div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="formDate">
+            日程日期<span class="required">*</span>
+          </label>
+          <input type="date" class="form-input" id="formDate" required>
+          <div class="form-error" id="formDateError" role="alert">请选择日程日期</div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="formTitle">
+            日程标题<span class="required">*</span>
+          </label>
+          <input type="text" class="form-input" id="formTitle" placeholder="请输入日程标题..." required>
+          <div class="form-error" id="formTitleError" role="alert">请填写日程标题</div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="formContent">
+            日程事项<span class="required">*</span>
+          </label>
+          <textarea class="form-textarea" id="formContent" rows="4" placeholder="请输入日程详细描述..." required></textarea>
+          <div class="form-error" id="formContentError" role="alert">请填写日程事项</div>
+        </div>
+        <div class="schedule-modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal-close>取消</button>
+          <button type="submit" class="btn btn-primary" id="formSubmit">确认提交</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- ===== /SCHEDULE MANAGEMENT MODAL ===== -->
+
+  <script>
+  (function() {
+    // ===== 顶栏吸顶交互:页面滚动 > 8px 时给 .top-nav 加 .is-scrolled,
+    // 触发阴影 + 背景半透明 + 背后内容微模糊,营造"浮起"层次感。
+    // 使用 requestAnimationFrame 节流 + {passive:true} 提升滚动性能。=====
+    (function initStickyTopNav() {
+      var nav = document.querySelector('.top-nav');
+      if (!nav) return;
+      var THRESHOLD = 8;          // 触发阈值(px),过小阈值容易误触发
+      var ticking = false;
+
+      function update() {
+        ticking = false;
+        var scrolled = window.scrollY > THRESHOLD;
+        // classList.toggle 第二个参数 = 强制状态,避免重复 add/remove 触发回流
+        nav.classList.toggle('is-scrolled', scrolled);
+      }
+
+      function onScroll() {
+        if (!ticking) {
+          window.requestAnimationFrame(update);
+          ticking = true;
+        }
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      // 初始态(如刷新时滚动条已不在顶部)补一次同步
+      update();
+    })();
+
+    // ===== Today highlight: dynamically mark the cell whose day number matches
+    // the system clock, so the "今日" gold-ring stays correct even after
+    // the page sits open across midnight or the build date goes stale. =====
+    function applyTodayHighlight() {
+      var today = new Date().getDate();
+      // Clear any pre-rendered .today from the static HTML (defensive)
+      document.querySelectorAll('.calendar-card .cal-day.today').forEach(function(c){
+        c.classList.remove('today');
+      });
+      // Mark the matching in-month cell
+      document.querySelectorAll('.calendar-card .cal-day').forEach(function(c){
+        if (c.classList.contains('other-month')) return;
+        var d = parseInt(c.textContent.trim(), 10);
+        if (d === today) c.classList.add('today');
+      });
+    }
+    applyTodayHighlight();
+
+    // ===== Mock reminder data for 2026-06 (refactored: 5 categories, 10 sub-types) =====
+    // ===== Mock reminder data for 2026-06 (refactored: 5 categories, 10 sub-types) =====
+    // Key = "YYYY-MM-DD", value = array of {category, subType, type, desc}
+    //   - category: 大类（5 个）
+    //   - subType:  细分小类（10 个）
+    //   - type:     color token (orange/blue/green/red/purple) — maps to .dot-* CSS class
+    //   - desc:     事项描述
+    const reminderData = {
+      '2026-05-31': [],
+      '2026-06-08': [],
+      '2026-06-09': [
+        {category:'手动创建日程', subType:'手动创建日程', type:'purple',
+         title:'周会', desc:'下季度策略讨论'}
+      ],
+      '2026-06-10': [
+        {category:'产品开放申赎', subType:'定开产品开放日', type:'blue',
+         desc:'汇添富鑫利定开债'}
+      ],
+      '2026-06-12': [
+        {category:'产品募集与上市', subType:'基金上市日期', type:'green',
+         desc:'汇添富恒指港股通ETF'}
+      ],
+      '2026-06-13': [
+        {category:'定期披露', subType:'定期报告披露日', type:'red',
+         desc:'季报第2季度'}
+      ],
+      '2026-06-15': [
+        {category:'产品募集与上市', subType:'募集期起始日', type:'green',
+         desc:'A500ETF汇添富'}
+      ],
+      '2026-06-16': [
+        {category:'各市场节假日', subType:'各市场节假日', type:'orange',
+         desc:'港股通 端午节'},
+        {category:'产品开放申赎', subType:'定开产品开放日', type:'blue',
+         desc:'汇添富鑫利定开债'}
+      ],
+      '2026-06-17': [
+        {category:'产品开放申赎', subType:'持有期首次可赎回日', type:'blue',
+         desc:'汇添富中证A500ETF联接A'}
+      ],
+      '2026-06-18': [
+        {category:'产品开放申赎', subType:'基金首次开放申赎日', type:'blue',
+         desc:'汇添富标普港股低波红利指数A\n汇添富标普港股通低波红利指数C'}
+      ],
+      '2026-06-19': [
+        {category:'各市场节假日', subType:'各市场节假日', type:'orange',
+         desc:'中国内地节假日 端午节'}
+      ],
+      '2026-06-20': [
+        {category:'定期披露', subType:'定期报告披露日', type:'red',
+         desc:'中报'}
+      ],
+      '2026-06-22': [
+        {category:'产品募集与上市', subType:'募集期截止日', type:'green',
+         desc:'A500ETF汇添富'}
+      ],
+      '2026-06-24': [
+        {category:'产品开放申赎', subType:'定开产品开放日', type:'blue',
+         desc:'汇添富鑫利定开债'}
+      ],
+      '2026-06-25': [
+        {category:'定期披露', subType:'定期更招概要披露日', type:'red',
+         desc:'定期更招概要披露日'}
+      ],
+      '2026-06-26': [
+        {category:'产品募集与上市', subType:'基金上市日期', type:'green',
+         desc:'汇添富恒指港股通ETF'}
+      ],
+      '2026-07-01': [], '2026-07-02': [], '2026-07-03': [], '2026-07-04': []
+    };
+
+    const WEEKDAYS = ['周日','周一','周二','周三','周四','周五','周六'];
+
+    // ===== DOM refs =====
+    const popover       = document.getElementById('reminderPopover');
+    const popoverArrow  = popover ? popover.querySelector('.popover-arrow') : null;
+    const popoverDate   = document.getElementById('popoverDate');
+    const popoverCount  = document.getElementById('popoverCount');
+    const popoverList   = document.getElementById('popoverList');
+    if (!popover || !popoverDate || !popoverArrow) return;
+
+    // ===== State =====
+    let showTimer = null;
+    let hideTimer = null;
+    let isFirstRender = true;  // skip position-transition on first paint
+    let currentEditItem = null;     // the 手动创建日程 item (if any) in the open popover
+    let currentEditDateKey = null;  // its date key, for edit-prefill
+    let currentPopoverItems = [];   // items currently rendered (for event delegation)
+
+    // ===== Helpers =====
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+    // Map a .cal-day cell to its date key. For the 2026-06 view we infer
+    // the month from the .other-month class: 5/31 is the only May cell,
+    // 7/1-4 are the only July cells.
+    function getDateKeyFromCell(cell) {
+      const day = parseInt(cell.textContent.trim(), 10);
+      if (isNaN(day)) return null;
+      if (cell.classList.contains('other-month')) {
+        if (day > 7) return '2026-07-' + pad2(day);
+        return '2026-05-' + pad2(day);
+      }
+      return '2026-06-' + pad2(day);
+    }
+
+    // Inline SVG icons for the row-level action buttons
+    var ICON_EDIT = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+    var ICON_TRASH = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+
+    function renderPopover(dateKey, cell) {
+      const items = reminderData[dateKey] || [];
+      currentPopoverItems = items;
+      currentEditItem = null;
+      currentEditDateKey = dateKey;
+      const parts = dateKey.split('-').map(Number);
+      const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+      popoverDate.textContent  = parts[1] + '月' + parts[2] + '日 ' + WEEKDAYS[dt.getDay()];
+      popoverCount.textContent = items.length + '项提醒';
+
+      if (items.length === 0) {
+        popoverList.innerHTML =
+          '<li class="popover-empty"><span class="empty-icon">📭</span>当日暂无待办</li>';
+      } else {
+        popoverList.innerHTML = items.map(function(it, idx){
+          const isManual = (it.category === '手动创建日程');
+          // Row-level actions: only for 手动创建日程 rows
+          const actionsHtml = isManual
+            ? '<div class="popover-item-actions">'
+              + '<button type="button" class="popover-item-icon" data-action="edit" data-idx="' + idx + '" aria-label="编辑该日程" tabindex="-1">' + ICON_EDIT + '</button>'
+              + '<button type="button" class="popover-item-icon popover-item-icon-danger" data-action="delete" data-idx="' + idx + '" aria-label="删除该日程" tabindex="-1">' + ICON_TRASH + '</button>'
+              + '</div>'
+            : '';
+
+          let bodyHtml;
+          if (isManual) {
+            // 手动创建日程: 上方一行显示 subType, 内容行 = title + ' ' + desc
+            const combinedTitle = (it.title || '') + (it.desc ? ' ' + it.desc : '');
+            bodyHtml =
+                '<div class="popover-item-label">' + it.subType + '</div>'
+              + '<div class="popover-item-title">' + combinedTitle.trim() + '</div>';
+          } else {
+            // 系统自带条目: cat + subType 作为标题, desc 单独一行
+            const catHtml = (it.category === it.subType)
+              ? ''
+              : '<span class="popover-item-cat">' + it.category + '</span>';
+            const titleText = it.title || it.subType;
+            bodyHtml =
+                '<div class="popover-item-title">' + catHtml + titleText + '</div>'
+              + '<div class="popover-item-desc">' + it.desc + '</div>';
+          }
+
+          return '<li class="popover-item' + (isManual ? ' is-manual' : '') + '">'
+            + '<span class="popover-dot dot-' + it.type + '"></span>'
+            + '<div class="popover-item-body">'
+            +   bodyHtml
+            + '</div>'
+            + actionsHtml
+            + '</li>';
+        }).join('');
+      }
+
+      // Track the first 手动创建日程 item (for click handling fallback)
+      const manual = items.find(function(it){ return it.category === '手动创建日程'; });
+      if (manual) currentEditItem = manual;
+
+      positionPopover(cell);
+      popover.classList.add('is-visible');
+      popover.setAttribute('aria-hidden', 'false');
+    }
+
+    // Step 2: smart positioning with edge-flip, viewport-clamp, and arrow tracking.
+    // Placement: prefer ABOVE the cell. If that would overflow the top of the
+    // viewport, flip to BELOW. The arrow always points at the cell center.
+    function positionPopover(cell) {
+      const cellRect = cell.getBoundingClientRect();
+      const popRect  = popover.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const margin = 8;
+
+      // Decide vertical placement
+      const roomAbove = cellRect.top - margin;
+      const roomBelow = vh - cellRect.bottom - margin;
+      const placeBelow = (roomAbove < popRect.height) && (roomBelow > roomAbove);
+
+      const popTop = placeBelow
+        ? cellRect.bottom + margin
+        : cellRect.top - popRect.height - margin;
+      const placement = placeBelow ? 'bottom' : 'top';
+
+      // Horizontal: center on cell, clamp to viewport
+      const cellCenterX = (cellRect.left + cellRect.right) / 2;
+      let popLeft = cellCenterX - popRect.width / 2;
+      popLeft = Math.max(margin, Math.min(popLeft, vw - popRect.width - margin));
+
+      // Disable position-transition on first render so the popover doesn't
+      // slide in from the (0,0) starting point
+      if (isFirstRender) {
+        popover.classList.add('no-transition');
+        // Force reflow so the no-transition rule takes effect before we set values
+        void popover.offsetWidth;
+      }
+
+      popover.style.left  = popLeft + 'px';
+      popover.style.top   = popTop  + 'px';
+      popover.setAttribute('data-placement', placement);
+
+      // Position the arrow to point at the cell's horizontal center.
+      // Arrow left is a percentage of popover width, clamped so the arrow
+      // tip never disappears off the popover edge.
+      const arrowLeftPx = cellCenterX - popLeft;
+      const arrowLeftPct = (arrowLeftPx / popRect.width) * 100;
+      const clampedPct = Math.max(6, Math.min(arrowLeftPct, 94));
+      popoverArrow.style.left = clampedPct + '%';
+
+      if (isFirstRender) {
+        // Remove the no-transition flag AFTER the browser has painted the
+        // initial position, so subsequent renders animate smoothly.
+        requestAnimationFrame(function(){
+          popover.classList.remove('no-transition');
+          isFirstRender = false;
+        });
+      }
+    }
+
+    function hidePopover() {
+      popover.classList.remove('is-visible');
+      popover.setAttribute('aria-hidden', 'true');
+      currentEditItem = null;
+      currentEditDateKey = null;
+    }
+
+    // ===== Unified open/close =====
+    // Step 3 refactor: extracted from the mouseenter/mouseleave handlers so
+    // the same logic can be reused by hover, focus (keyboard), and click
+    // (touch) input modes.
+    let currentCell = null;
+    const SHOW_DELAY = 200;  // mouse/touch debounce; keyboard uses focus (instant)
+    const HIDE_DELAY = 200;
+
+    function openPopoverForCell(cell) {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      if (showTimer) clearTimeout(showTimer);
+      showTimer = setTimeout(function(){
+        const key = getDateKeyFromCell(cell);
+        if (key) {
+          currentCell = cell;
+          renderPopover(key, cell);
+        }
+      }, SHOW_DELAY);
+    }
+
+    function scheduleClose() {
+      if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+      currentCell = null;
+      hideTimer = setTimeout(hidePopover, HIDE_DELAY);
+    }
+
+    // ===== Event binding =====
+    // Detect input mode: (hover: none) = primary input is touch.
+    // Hybrid devices (laptop + touchscreen) typically report the mouse as
+    // primary, so the hover path is used and the touch click is ignored.
+    const isTouch = window.matchMedia('(hover: none)').matches;
+    const cells = document.querySelectorAll('.calendar-card .cal-day');
+
+    cells.forEach(function(cell){
+      // ===== a11y: make each cell keyboard-reachable + announce its content =====
+      const key = getDateKeyFromCell(cell);
+      if (key) {
+        const items = reminderData[key] || [];
+        const kp = key.split('-');
+        // Summarize sub-types for screen readers, e.g. "6月18日，共1项提醒：基金首次开放申赎日"
+        const subTypes = items.map(function(it){ return it.subType; }).join('、');
+        const labelText = kp[1] + '月' + kp[2] + '日，共' + items.length + '项提醒'
+          + (subTypes ? '：' + subTypes : '');
+        cell.setAttribute('tabindex', '0');
+        cell.setAttribute('role', 'button');
+        cell.setAttribute('aria-label', labelText);
+        cell.setAttribute('aria-describedby', 'reminderPopover');
+      }
+
+      if (isTouch) {
+        // Touch: tap to toggle (tapping same cell closes, tapping another moves)
+        cell.addEventListener('click', function(e){
+          e.stopPropagation();
+          if (currentCell === cell && popover.classList.contains('is-visible')) {
+            hidePopover();
+            currentCell = null;
+          } else {
+            openPopoverForCell(cell);
+          }
+        });
+      } else {
+        // Mouse: hover to open, leave to close
+        cell.addEventListener('mouseenter', function(){
+          openPopoverForCell(cell);
+        });
+        cell.addEventListener('mouseleave', function(){
+          scheduleClose();
+        });
+      }
+
+      // Keyboard (both modes): focus opens, blur closes
+      cell.addEventListener('focus', function(){
+        openPopoverForCell(cell);
+      });
+      cell.addEventListener('blur', function(){
+        scheduleClose();
+      });
+    });
+
+    // Keep popover open while hovering over it (mouse mode)
+    popover.addEventListener('mouseenter', function(){
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    });
+    popover.addEventListener('mouseleave', function(){
+      scheduleClose();
+    });
+
+    // ===== Popover row-level action buttons (仅 手动创建日程 行内) =====
+    // Event delegation on the list: identify the clicked icon by data-action
+    popoverList.addEventListener('click', function(e){
+      var btn = e.target.closest && e.target.closest('.popover-item-icon');
+      if (!btn || !popoverList.contains(btn)) return;
+      e.stopPropagation();
+      var action = btn.dataset.action;
+      var idx = parseInt(btn.dataset.idx, 10);
+      var item = currentPopoverItems[idx];
+      if (!item || item.category !== '手动创建日程') return;
+
+      if (action === 'edit') {
+        hidePopover();
+        setTimeout(function(){
+          openModal({
+            date:    currentEditDateKey,    // e.g. '2026-06-09'
+            title:   '周会',
+            content: '下季度策略讨论'
+          });
+        }, 60);
+      } else if (action === 'delete') {
+        if (window.confirm('确定要删除该日程吗？')) {
+          hidePopover();
+        }
+      }
+    });
+
+    // Close on outside click (works for both touch tap and mouse click)
+    document.addEventListener('click', function(e){
+      if (!popover.contains(e.target) && !e.target.closest('.cal-day')) {
+        hidePopover();
+        currentCell = null;
+      }
+    });
+    // Close on ESC
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') {
+        hidePopover();
+        currentCell = null;
+      }
+    });
+    // Popover uses fixed positioning — must hide on scroll/resize
+    window.addEventListener('scroll', hidePopover, true);
+    window.addEventListener('resize', hidePopover);
+
+    // Hide on month-nav clicks (so leftover popovers don't survive a month switch)
+    const navArrows = document.querySelectorAll('.calendar-card .nav-arrow');
+    navArrows.forEach(function(arrow){
+      arrow.addEventListener('click', function(){
+        if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        hidePopover();
+        currentCell = null;
+      });
+    });
+
+    // ===== Schedule Management Modal =====
+    const editBtn       = document.getElementById('calendarEditBtn');
+    const modal         = document.getElementById('scheduleModal');
+    const form          = document.getElementById('scheduleForm');
+    const tagWrap       = document.getElementById('formVisibleToWrap');
+    const tagTrigger    = document.getElementById('formVisibleToTrigger');
+    const tagDropdown   = document.getElementById('formVisibleToDropdown');
+    const tagOptions    = tagDropdown ? tagDropdown.querySelectorAll('.form-tag-option') : [];
+    const tagsContainer = document.getElementById('formTags');
+    const errorEl       = document.getElementById('formVisibleToError');
+    const dateInput     = document.getElementById('formDate');
+    const dateErrorEl   = document.getElementById('formDateError');
+    const titleInput    = document.getElementById('formTitle');
+    const titleErrorEl  = document.getElementById('formTitleError');
+    const contentInput  = document.getElementById('formContent');
+    const contentErrorEl= document.getElementById('formContentError');
+
+    // State: selected people for 可见人. Default to current user "员工A".
+    let selectedPeople = ['员工A'];
+    let isModalOpen = false;
+    let isDropdownOpen = false;
+
+    function renderTags() {
+      tagsContainer.innerHTML = selectedPeople.map(function(name){
+        return '<span class="form-tag">' + name
+          + '<button type="button" class="form-tag-remove" data-remove="' + name + '" aria-label="移除 ' + name + '">×</button>'
+          + '</span>';
+      }).join('');
+    }
+
+    function addTag(name) {
+      name = (name || '').trim();
+      if (!name) return;
+      if (selectedPeople.indexOf(name) !== -1) return;
+      selectedPeople.push(name);
+      renderTags();
+      renderOptionsState();
+      // Clear error state as soon as a valid person is added
+      clearVisibleToError();
+    }
+
+    function removeTag(name) {
+      selectedPeople = selectedPeople.filter(function(n){ return n !== name; });
+      renderTags();
+      renderOptionsState();
+      // Re-validate after removal
+      validateVisibleTo();
+    }
+
+    function clearVisibleToError() {
+      errorEl.classList.remove('is-visible');
+      tagWrap.classList.remove('has-error');
+    }
+
+    // Sync the dropdown options' visual state (✓ + .is-selected) with selectedPeople
+    function renderOptionsState() {
+      tagOptions.forEach(function(opt){
+        var value = opt.dataset.value;
+        if (selectedPeople.indexOf(value) !== -1) {
+          opt.classList.add('is-selected');
+          opt.setAttribute('aria-selected', 'true');
+        } else {
+          opt.classList.remove('is-selected');
+          opt.setAttribute('aria-selected', 'false');
+        }
+      });
+    }
+
+    function openDropdown() {
+      if (isDropdownOpen) return;
+      isDropdownOpen = true;
+      tagDropdown.hidden = false;
+      tagTrigger.setAttribute('aria-expanded', 'true');
+      renderOptionsState();
+    }
+
+    function closeDropdown() {
+      if (!isDropdownOpen) return;
+      isDropdownOpen = false;
+      tagDropdown.hidden = true;
+      tagTrigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleDropdown() {
+      if (isDropdownOpen) closeDropdown();
+      else openDropdown();
+    }
+
+    function validateVisibleTo() {
+      if (selectedPeople.length === 0) {
+        errorEl.classList.add('is-visible');
+        tagWrap.classList.add('has-error');
+        return false;
+      }
+      clearVisibleToError();
+      return true;
+    }
+
+    function clearDateError() {
+      dateInput.classList.remove('has-error');
+      dateErrorEl.classList.remove('is-visible');
+    }
+    function validateDate() {
+      if (!dateInput.value) {
+        dateInput.classList.add('has-error');
+        dateErrorEl.classList.add('is-visible');
+        return false;
+      }
+      clearDateError();
+      return true;
+    }
+
+    function clearTitleError() {
+      titleInput.classList.remove('has-error');
+      titleErrorEl.classList.remove('is-visible');
+    }
+    function validateTitle() {
+      if (!titleInput.value.trim()) {
+        titleInput.classList.add('has-error');
+        titleErrorEl.classList.add('is-visible');
+        return false;
+      }
+      clearTitleError();
+      return true;
+    }
+
+    function clearContentError() {
+      contentInput.classList.remove('has-error');
+      contentErrorEl.classList.remove('is-visible');
+    }
+    function validateContent() {
+      if (!contentInput.value.trim()) {
+        contentInput.classList.add('has-error');
+        contentErrorEl.classList.add('is-visible');
+        return false;
+      }
+      clearContentError();
+      return true;
+    }
+
+    function openModal(prefill) {
+      if (isModalOpen) return;
+      isModalOpen = true;
+      modal.classList.add('is-visible');
+      modal.setAttribute('aria-hidden', 'false');
+      // Initial state: creator readonly, visibleTo = current user, dropdown closed
+      renderTags();
+      renderOptionsState();
+      closeDropdown();
+      // Apply prefill (e.g. when triggered by "编辑" on a manually-created schedule)
+      if (prefill) {
+        if (prefill.date)     dateInput.value    = prefill.date;
+        if (prefill.title)    titleInput.value   = prefill.title;
+        if (prefill.content)  contentInput.value = prefill.content;
+        // visibleTo and creator keep their defaults
+      }
+      // Focus the date input after the entrance animation
+      setTimeout(function(){ dateInput.focus(); }, 100);
+    }
+
+    function closeModal() {
+      if (!isModalOpen) return;
+      isModalOpen = false;
+      modal.classList.remove('is-visible');
+      modal.setAttribute('aria-hidden', 'true');
+      closeDropdown();
+      // Reset form after the exit animation completes
+      setTimeout(function(){
+        form.reset();
+        selectedPeople = ['员工A'];
+        renderTags();
+        renderOptionsState();
+        clearVisibleToError();
+        clearDateError();
+        clearTitleError();
+        clearContentError();
+        dateInput.value = '';
+        titleInput.value = '';
+        contentInput.value = '';
+      }, 220);
+    }
+
+    // ===== Event binding for the modal =====
+    if (editBtn && modal && form) {
+      // Open
+      editBtn.addEventListener('click', openModal);
+
+      // Close: any element marked [data-modal-close]
+      modal.addEventListener('click', function(e){
+        if (e.target.dataset && e.target.dataset.modalClose !== undefined) {
+          closeModal();
+        }
+      });
+
+      // Dropdown trigger: click toggles the custom dropdown panel
+      tagTrigger.addEventListener('click', function(e){
+        e.stopPropagation();
+        toggleDropdown();
+      });
+
+      // Option click: add as tag, close dropdown
+      tagDropdown.addEventListener('click', function(e){
+        var opt = e.target.closest && e.target.closest('.form-tag-option');
+        if (opt) {
+          addTag(opt.dataset.value);
+          closeDropdown();
+        }
+      });
+
+      // Click on a tag's × button to remove
+      tagWrap.addEventListener('click', function(e){
+        var removeBtn = e.target.closest && e.target.closest('.form-tag-remove');
+        if (removeBtn) {
+          removeTag(removeBtn.dataset.remove);
+          return;
+        }
+      });
+
+      // Submit
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        // Run all validations; focus the first failing field
+        var visOk = validateVisibleTo();
+        var dateOk = validateDate();
+        var titleOk = validateTitle();
+        var contentOk = validateContent();
+        if (!visOk) { tagTrigger.focus(); return; }
+        if (!dateOk) { dateInput.focus(); return; }
+        if (!titleOk) { titleInput.focus(); return; }
+        if (!contentOk) { contentInput.focus(); return; }
+        var data = {
+          creator:   document.getElementById('formCreator').value,
+          visibleTo: selectedPeople.slice(),
+          date:      dateInput.value,
+          title:     titleInput.value.trim(),
+          content:   contentInput.value.trim()
+        };
+        // Stub: would POST to /api/schedule. For now log + close.
+        console.log('[schedule submitted]', data);
+        closeModal();
+      });
+
+      // Live-clear errors as the user types / picks a date
+      dateInput.addEventListener('input', clearDateError);
+      titleInput.addEventListener('input', clearTitleError);
+      contentInput.addEventListener('input', clearContentError);
+
+      // Outside click closes the dropdown (but keeps the modal open)
+      document.addEventListener('click', function(e){
+        if (isDropdownOpen && !tagWrap.contains(e.target)) {
+          closeDropdown();
+        }
+      });
+    }
+
+    // Global ESC: close dropdown first, then modal (in addition to its own popover handler)
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') {
+        if (isDropdownOpen) {
+          closeDropdown();
+        } else if (isModalOpen) {
+          closeModal();
+        }
+      }
+    });
+  })();
+  </script>
+
+  <!-- ===== 待办公告任务提示:共享 mock 数据源必须先加载 ===== -->
+  <script src="./todo-mock-data.js"></script>
+  <script>
+  (function(global) {
+    'use strict';
+
+    function getAllTasks() {
+      var src = global.__TODO_TASKS__;
+      return Array.isArray(src) ? src : [];
+    }
+
+    function getToday() {
+      return global.__TODO_TODAY__ || new Date().toISOString().slice(0, 10);
+    }
+
+    function diffDays(noticeDate, today) {
+      if (!noticeDate || noticeDate === '-' || !today) return null;
+      var noticeTime = Date.parse(noticeDate + 'T00:00:00');
+      var todayTime = Date.parse(today + 'T00:00:00');
+      if (isNaN(noticeTime) || isNaN(todayTime)) return null;
+      return Math.round((noticeTime - todayTime) / 86400000);
+    }
+
+    function computeTimeText(noticeDate, today) {
+      var d = diffDays(noticeDate, today);
+      if (d === null) return '日期待定';
+      if (d < 0) return '已逾期 ' + Math.abs(d) + ' 天';
+      if (d === 0) return '今日';
+      if (d <= 3) return '剩 ' + d + ' 天';
+      return '剩 ' + d + ' 天';
+    }
+
+    function mapToCardView(task, today) {
+      var d = diffDays(task.noticeDate, today);
+      var timeClass = 'muted';
+      if (d !== null && d < 0) timeClass = 'alert';
+      else if (d !== null && d <= 3) timeClass = 'amber';
+      return {
+        id: task.id,
+        type: task.type,
+        title: task.fundFullName,
+        noticeDate: task.noticeDate,
+        timeText: computeTimeText(task.noticeDate, today),
+        isExpire: !!task.expireToday,
+        timeClass: timeClass,
+        createTime: task.generatedAt ? task.generatedAt.slice(5, 10) : '--',
+        d: d
+      };
+    }
+
+    /* 分页状态：current 当前页(从 1 开始),size 每页条数,totalPages 总页数 */
+    var todoPagination = { current: 1, size: 5, totalPages: 1 };
+
+    function updateTodoPaginationUI() {
+      var textEl = document.getElementById('todoPageText');
+      var prevEl = document.getElementById('todoPagePrev');
+      var nextEl = document.getElementById('todoPageNext');
+      if (textEl) textEl.innerText = todoPagination.current + ' / ' + todoPagination.totalPages;
+      if (prevEl) {
+        prevEl.classList.toggle('is-disabled', todoPagination.current <= 1);
+      }
+      if (nextEl) {
+        nextEl.classList.toggle('is-disabled', todoPagination.current >= todoPagination.totalPages);
+      }
+    }
+
+    function bindTodoPagination() {
+      var prevEl = document.getElementById('todoPagePrev');
+      var nextEl = document.getElementById('todoPageNext');
+      if (prevEl) {
+        prevEl.addEventListener('click', function() {
+          if (todoPagination.current > 1) {
+            todoPagination.current--;
+            refreshTodoCard();
+          }
+        });
+      }
+      if (nextEl) {
+        nextEl.addEventListener('click', function() {
+          if (todoPagination.current < todoPagination.totalPages) {
+            todoPagination.current++;
+            refreshTodoCard();
+          }
+        });
+      }
+    }
+
+    function refreshTodoCard() {
+      var elAll = document.getElementById('todo-num-all');
+      var elExpire = document.getElementById('todo-num-expire');
+      var container = document.getElementById('todo-widget-list');
+      if (!elAll || !elExpire || !container) return;
+
+      var today = getToday();
+      var views = getAllTasks()
+        .filter(function(task) { return task && task.status === 'pending'; })
+        .sort(function(a, b) {
+          var aTime = Date.parse((a.generatedAt || '').replace(' ', 'T'));
+          var bTime = Date.parse((b.generatedAt || '').replace(' ', 'T'));
+          if (bTime !== aTime) return bTime - aTime;
+          return String(b.id).localeCompare(String(a.id));
+        })
+        .map(function(task) { return mapToCardView(task, today); });
+
+      elAll.innerText = views.length;
+      elExpire.innerText = views.filter(function(v) { return v.d === 0; }).length;
+
+      /* 分页切分：超出 1 页时启用 */
+      todoPagination.totalPages = Math.max(1, Math.ceil(views.length / todoPagination.size));
+      if (todoPagination.current > todoPagination.totalPages) {
+        todoPagination.current = todoPagination.totalPages;
+      }
+      var start = (todoPagination.current - 1) * todoPagination.size;
+      var pageItems = views.slice(start, start + todoPagination.size);
+
+      container.innerHTML = '';
+      if (!pageItems.length) {
+        var empty = document.createElement('div');
+        empty.className = 'todo-widget-empty';
+        empty.innerText = '暂无此类待办任务';
+        container.appendChild(empty);
+        updateTodoPaginationUI();
+        return;
+      }
+
+      pageItems.forEach(function(item) {
+        var row = document.createElement('div');
+        row.className = 'todo-task-item' + (item.isExpire ? ' is-expire' : '');
+        row.innerHTML = [
+          '<div class="todo-task-top-line">',
+          '  <span class="todo-task-badge">' + escapeHtml(item.type) + '</span>',
+          '  <span class="todo-task-name" title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</span>',
+          '</div>',
+          '<div class="todo-task-bottom-line">',
+          '  <span class="todo-task-create-time">创建 ' + escapeHtml(item.createTime) + '</span>',
+          '  <span class="todo-task-time ' + item.timeClass + '">',
+          '    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:.7"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+          '    ' + escapeHtml(item.timeText),
+          '  </span>',
+          '</div>'
+        ].join('');
+        container.appendChild(row);
+      });
+
+      updateTodoPaginationUI();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function initTodoCard() {
+      bindTodoPagination();
+      refreshTodoCard();
+    }
+
+    global.todoRefreshCard = refreshTodoCard;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initTodoCard);
+    } else {
+      initTodoCard();
+    }
+  })(window);
+  </script>
+
+</body><!--pnid:fu08fEftkQ4E35IqTB4EWK-->
+</html><!--pnid:Ko9tZ2enlLKEJ6vRfF4x74-->
