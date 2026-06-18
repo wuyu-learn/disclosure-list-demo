@@ -305,10 +305,11 @@
       display: flex;
       gap: 8px;
       align-items: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;        /* 强制一行:查询/重置/导出日志 不被换行 */
       justify-content: flex-end;
       justify-self: end;
       align-self: center;
+      min-width: 0;
     }
     .btn-row-checkbox {
       display: inline-flex;
@@ -324,6 +325,104 @@
     .btn-row-checkbox input[type="checkbox"] {
       margin: 0;
       cursor: pointer;
+    }
+
+    /* ===== 公告日期查询方式 — 下拉弹框(向上弹出) ===== */
+    .btn-row-dropdown {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: auto;
+    }
+    .btn-row-dropdown-title {
+      font-size: 14px;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+    .btn-row-dropdown-trigger {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--biz-line);
+      border-radius: 6px;
+      background: #fff;
+      color: #344054;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      white-space: nowrap;
+      font-weight: 400;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-row-dropdown-trigger:hover {
+      border-color: var(--biz-primary);
+      color: var(--biz-primary);
+    }
+    .btn-row-dropdown.is-open .btn-row-dropdown-trigger {
+      border-color: var(--biz-primary);
+      color: var(--biz-primary);
+    }
+    .btn-row-dropdown-label {
+      color: #6b7280;
+    }
+    .btn-row-dropdown-value {
+      color: #344054;
+      font-weight: 500;
+    }
+    .btn-row-dropdown-caret {
+      width: 7px;
+      height: 7px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      transition: transform .15s;
+      margin-top: -2px;
+    }
+    .btn-row-dropdown.is-open .btn-row-dropdown-caret {
+      transform: rotate(-135deg);
+      margin-top: 3px;
+    }
+    .btn-row-dropdown-menu {
+      position: fixed;
+      min-width: 180px;
+      padding: 4px 0;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      display: none;
+      z-index: 9999;
+    }
+    .btn-row-dropdown.is-open .btn-row-dropdown-menu {
+      display: block;
+    }
+    .btn-row-dropdown-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+      line-height: 1.4;
+      transition: background-color .12s, color .12s;
+    }
+    .btn-row-dropdown-option:hover {
+      background: #f5f7fa;
+    }
+    .btn-row-dropdown-option.active {
+      color: var(--biz-primary);
+      font-weight: 600;
+    }
+    .btn-row-dropdown-option.active::after {
+      content: '✓';
+      font-size: 12px;
+      color: var(--biz-primary);
     }
     .btn {
       min-height: 34px;
@@ -703,6 +802,15 @@
     .link-btn:hover { color: var(--biz-primary-hover); text-decoration: none; }  /* ⭐ hover 金黄主题色,无下划线 */
     .link-btn.danger { color: var(--biz-red); }
     .link-btn.danger:hover { color: #8a1812; }
+    .link-btn:disabled,
+    .link-btn[disabled] {
+      color: #c0c4cc;                       /* 灰态:浅灰,鼠标不可点 */
+      cursor: not-allowed;
+    }
+    .link-btn:disabled:hover,
+    .link-btn[disabled]:hover {
+      color: #c0c4cc;                       /* 灰态 hover 不变色 */
+    }
 
     .empty {
       padding: 36px;
@@ -1189,10 +1297,18 @@
         <div></div>
         <div></div>
         <div class="btn-row">
-          <label class="btn-row-checkbox" id="searchIncludeControlLabel" title="勾选后,查询时筛选项包含空公告日期的任务">
-            <input type="checkbox" id="searchIncludeControl" checked>
-            <span>查询公告日期包含空值</span>
-          </label>
+          <div class="btn-row-dropdown" id="announceDateMode">
+            <span class="btn-row-dropdown-title">公告日期查询方式</span>
+            <button type="button" class="btn-row-dropdown-trigger" id="announceDateModeTrigger" aria-haspopup="listbox" aria-expanded="false" title="公告日期查询方式">
+              <span class="btn-row-dropdown-value" id="announceDateModeLabel">根据筛选日期</span>
+              <span class="btn-row-dropdown-caret" aria-hidden="true"></span>
+            </button>
+            <div class="btn-row-dropdown-menu" id="announceDateModeMenu" role="listbox" aria-label="公告日期查询方式">
+              <div class="btn-row-dropdown-option active" role="option" data-mode="filtered" data-label="根据筛选日期">根据筛选日期</div>
+              <div class="btn-row-dropdown-option" role="option" data-mode="filteredOrEmpty" data-label="根据筛选日期及空值">根据筛选日期及空值</div>
+              <div class="btn-row-dropdown-option" role="option" data-mode="emptyOnly" data-label="仅空值">仅空值</div>
+            </div>
+          </div>
           <button class="btn primary" id="searchBtn">查询</button>
           <button class="btn" id="resetBtn">重置</button>
           <button class="btn" id="exportLogBtn">⬇ 导出日志</button>
@@ -1476,7 +1592,8 @@
       deadlineMin: null,           /* ⭐ 剩余天数区间筛选下界(null=不限) */
       deadlineMax: null,           /* ⭐ 剩余天数区间筛选上界(null=不限) */
       operateDateStart: null,      /* ⭐ 最后操作时间区间下界 */
-      operateDateEnd:   null       /* ⭐ 最后操作时间区间上界 */
+      operateDateEnd:   null,      /* ⭐ 最后操作时间区间上界 */
+      announceDateMode: 'filtered' /* ⭐ 公告日期查询方式:'filtered' | 'filteredOrEmpty' | 'emptyOnly'(默认 'filtered') */
     };
 
     // ===== 合规操作日志 — 操作类型枚举 =====
@@ -1619,6 +1736,64 @@
       }
       if (els.deadlineMin) els.deadlineMin.addEventListener("keydown", function(e) { if (e.key === 'Enter') commitDeadlineRange(); });
       if (els.deadlineMax) els.deadlineMax.addEventListener("keydown", function(e) { if (e.key === 'Enter') commitDeadlineRange(); });
+
+      // ⭐ 「公告日期查询方式」下拉弹框
+      (function bindAnnounceDateMode() {
+        var wrap    = document.getElementById("announceDateMode");
+        var trigger = document.getElementById("announceDateModeTrigger");
+        var menu    = document.getElementById("announceDateModeMenu");
+        var labelEl = document.getElementById("announceDateModeLabel");
+        if (!wrap || !trigger || !menu) return;
+
+        function close() {
+          wrap.classList.remove("is-open");
+          trigger.setAttribute("aria-expanded", "false");
+        }
+        function open() {
+          var rect = trigger.getBoundingClientRect();
+          menu.style.left = rect.left + "px";
+          menu.style.top  = (rect.bottom + 6) + "px";
+          wrap.classList.add("is-open");
+          trigger.setAttribute("aria-expanded", "true");
+        }
+
+        trigger.addEventListener("click", function(e) {
+          e.stopPropagation();
+          if (wrap.classList.contains("is-open")) close();
+          else open();
+        });
+
+        menu.addEventListener("click", function(e) {
+          var opt = e.target.closest(".btn-row-dropdown-option");
+          if (!opt) return;
+          var mode  = opt.dataset.mode;
+          var label = opt.dataset.label;
+          if (!mode || !label) return;
+          // 更新 UI
+          Array.prototype.forEach.call(
+            menu.querySelectorAll(".btn-row-dropdown-option"),
+            function(el) { el.classList.toggle("active", el.dataset.mode === mode); }
+          );
+          if (labelEl) labelEl.textContent = label;
+          // 同步到 state
+          state.announceDateMode = mode;
+          close();
+          // 直接触发查询
+          executeSearch();
+        });
+
+        // 弹框外点击关闭
+        document.addEventListener("click", function(e) {
+          if (!wrap.classList.contains("is-open")) return;
+          if (wrap.contains(e.target)) return;
+          close();
+        });
+        // Esc 关闭
+        document.addEventListener("keydown", function(e) {
+          if (e.key === "Escape" && wrap.classList.contains("is-open")) close();
+        });
+      })();
+
       els.checkAll.addEventListener("change", toggleAll);
       document.getElementById("batchDelete").addEventListener("click", () => confirmDelete([...state.selectedIds]));
       document.getElementById("batchStart").addEventListener("click", function() {
@@ -1878,7 +2053,7 @@
           <td class="col-code" title="${task.fundCode}">${displayCode}</td>
           <td class="col-fund-full" title="${task.fundFullName}">${task.fundFullName}</td>
           <td class="col-fund-short" title="${task.fundShortName}">${displayShort}</td>
-          <td>${statusTag(task.status)}</td>
+          <td>${statusTag(task.status, state.activeStatus === 'pending,editing' ? 'todo' : 'normal')}</td>
           <td>${task.generatedAt}</td>
           <td class="col-deadline">${state.activeStatus === 'pending,editing' ? deadlineTag(task.noticeDate) : '<span style="color: #ccc;">--</span>'}</td>
           <td>${task.noticeDate}</td>
@@ -1887,7 +2062,9 @@
             <div class="row-actions">
               <button class="link-btn" data-detail="${task.id}">查看</button>
               ${task.status === 'pending' || task.status === 'editing' ? `<button class="link-btn" data-edit="${task.id}">编辑</button>` : ''}
-              ${task.status === 'pending' || task.status === 'editing' ? `<button class="link-btn" data-start="${task.id}">发起</button>` : ''}
+              ${task.status === 'pending' || task.status === 'editing'
+  ? `<button class="link-btn" data-start="${task.id}"${task.status === 'pending' ? ' disabled' : ''}>发起</button>`
+  : ''}
               ${task.status === 'pending' || task.status === 'editing' || task.status === 'expired' ? `<button class="link-btn danger" data-delete="${task.id}">删除</button>` : ''}
               <button class="link-btn log-entry" data-log="${task.id}">日志</button>
             </div>
@@ -1911,7 +2088,12 @@
     }
 
     // ⭐ 状态徽标:底层英文 code → 界面中文 + 金黄/绿/青/红 Tag 样式
-    function statusTag(status) {
+    function statusTag(status, mode) {
+      // ⭐ mode = 'todo' 时(「待办」Tab 下),把 pending / editing 合并显示为「待办」(gold)
+      //   其他 Tab 下保持原 statusTag 行为不变
+      if (mode === 'todo' && (status === 'pending' || status === 'editing')) {
+        return `<span class="tag gold">待办</span>`;
+      }
       const map = {
         pending:   { cls: "gold",  text: "待处理" },
         editing:     { cls: "green", text: "编辑中" },
@@ -1981,13 +2163,19 @@
         logBtn.disabled = (count === 0);
       }
 
-      // 3. =====【批量发起】仅待办 Tab 且勾选数 > 0 可点;其余 Tab 强制灰态 =====
+      // 3. =====【批量发起】仅待办 Tab 下,且勾选任务全部是 editing 才可点 =====
       var startBtn = document.getElementById("batchStart");
       if (startBtn) {
-        if (currentTab === 'pending,editing') {
-          startBtn.disabled = (count === 0);
-        } else {
+        if (currentTab !== 'pending,editing' || count === 0) {
           startBtn.disabled = true;
+        } else {
+          // 检查所有勾选任务是否都是 editing
+          var allEditing = true;
+          state.selectedIds.forEach(function(id) {
+            var task = tasks.find(function(t) { return t.id === id; });
+            if (!task || task.status !== 'editing') allEditing = false;
+          });
+          startBtn.disabled = !allEditing;
         }
       }
 
