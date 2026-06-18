@@ -307,6 +307,8 @@
       align-items: center;
       flex-wrap: wrap;
       justify-content: flex-end;
+      justify-self: end;
+      align-self: center;
     }
     .btn {
       min-height: 34px;
@@ -388,49 +390,49 @@
     }
     .filters { padding: 16px; }
     .filter-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px 16px;
-      align-items: end;
-    }
-    .filter-row {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 12px 16px;
-      align-items: end;
-      width: 100%;
+      align-items: center;
     }
-    .filter-row-main .field {
-      flex: 0 1 240px;
-      min-width: 180px;
+    .filter-grid > * {
+      min-width: 0;
+      overflow: hidden;
     }
-    .filter-row-main #typeFilter {
-      min-width: 220px;
+
+    /* ⭐ 统一控件最大宽度 320px — Select、Input、DateRange 保持一致,形成规整栅格 */
+    #typeFilter,
+    select.filter-select,
+    #keywordFilter,
+    input.filter-input,
+    .date-range-picker-input {
+      flex: 1;
+      min-width: 0;
+      max-width: 320px;
     }
-    .filter-row-main #keywordFilter {
-      min-width: 240px;
+
+    /* ⭐ 统一 label 宽度 72px,贴最长 label 文字,减少无意义留白 */
+    .filter-grid .field label {
+      display: inline-block;
+      flex-shrink: 0;
+      text-align: left;
+      white-space: nowrap;
+      width: 72px;
     }
-    .filter-row-main .deadline-field {
-      margin-left: 16px;
-    }
-    .filter-row-dates .date-range-group {
-      flex: 0 1 310px;
-      min-width: 280px;
-    }
-    .filter-row-dates .btn-row {
-      flex: 0 0 auto;
-      margin-left: auto;
-      justify-content: flex-end;
-    }
-    .filter-grid .date-range-group {
-      flex-basis: 310px;
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
     }
     .field label {
-      display: block;
+      display: inline-block;
       color: #475467;
-      margin-bottom: 6px;
+      margin-bottom: 0;
       font-size: 12px;
       font-weight: 400;          /* ⭐ 表单标签归一 */
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .control {
       width: 100%;
@@ -956,9 +958,11 @@
     .date-range-group { }
     .date-range-picker-input {
       display: flex;
+      flex-wrap: nowrap;
       align-items: center;
+      flex: 1;
+      min-width: 0;
       height: 34px;
-      width: fit-content;
       border: 1px solid var(--biz-line);
       border-radius: 6px;
       background: #fff;
@@ -976,7 +980,9 @@
       background: transparent;
       color: var(--biz-text);
       font-size: 13px;
-      width: 130px;
+      min-width: 100px;
+      flex: 1;
+      width: auto;
       padding: 0;
     }
     .date-range-picker-input input[type="date"]::-webkit-calendar-picker-indicator {
@@ -987,6 +993,7 @@
       color: var(--biz-muted);
       font-size: 12px;
       flex-shrink: 0;
+      margin: 0 4px;
       user-select: none;
     }
 
@@ -1061,21 +1068,6 @@
     /* ============================================================
        九、响应式断点
        ============================================================ */
-    @media (max-width: 1100px) {
-      .filter-grid .btn-row {
-        margin-left: 0;
-        justify-content: flex-start;
-      }
-    }
-    @media (max-width: 720px) {
-      .filter-row-main .field,
-      .filter-row-dates .date-range-group {
-        flex-basis: 100%;
-      }
-      .filter-row-main .deadline-field {
-        margin-left: 0;
-      }
-      }
   </style>
 </head>
 <body>
@@ -1141,56 +1133,50 @@
     <!-- C.2 过滤区 -->
     <section class="panel filters">
       <div class="filter-grid">
-        <div class="filter-row filter-row-main">
-          <div class="field">
-            <label for="typeFilter">待办公告类型</label>
-            <select id="typeFilter" class="control">
-              <option value>全部公告类型</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="keywordFilter">产品信息</label>
-            <input id="keywordFilter" class="control" placeholder="请输入产品简称或代码">
-          </div>
-          <div class="field" id="deadline-filter-wrapper">
-            <label>剩余天数</label>
-            <div class="deadline-range-row">
-              <input type="number" id="deadline-min" class="control" placeholder="最小天数">
-              <span class="deadline-range-sep">-</span>
-              <input type="number" id="deadline-max" class="control" placeholder="最大天数">
-            </div>
+        <!-- 第一行 -->
+        <div class="field">
+          <label for="typeFilter">待办公告类型</label>
+          <select id="typeFilter" class="control">
+            <option value>全部公告类型</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="keywordFilter">产品信息</label>
+          <input id="keywordFilter" class="control" placeholder="请输入产品简称或代码">
+        </div>
+        <div class="field date-range-group">
+          <label>最后操作时间</label>
+          <div class="date-range-picker-input">
+            <input type="date" id="operateDateStart">
+            <span class="range-separator">至</span>
+            <input type="date" id="operateDateEnd">
           </div>
         </div>
-        <div class="filter-row filter-row-dates">
-          <div class="field date-range-group">
-            <label>任务创建时间</label>
-            <div class="date-range-picker-input">
-              <input type="date" id="createDateStart">
-              <span class="range-separator">至</span>
-              <input type="date" id="createDateEnd">
-            </div>
+        <!-- 第二行 -->
+        <div class="field date-range-group">
+          <label>任务创建时间</label>
+          <div class="date-range-picker-input">
+            <input type="date" id="createDateStart">
+            <span class="range-separator">至</span>
+            <input type="date" id="createDateEnd">
           </div>
-          <div class="field date-range-group">
-            <label>公告日期</label>
-            <div class="date-range-picker-input">
-              <input type="date" id="dateStart">
-              <span class="range-separator">至</span>
-              <input type="date" id="dateEnd">
-            </div>
+        </div>
+        <div class="field date-range-group">
+          <label>公告日期</label>
+          <div class="date-range-picker-input">
+            <input type="date" id="dateStart">
+            <span class="range-separator">至</span>
+            <input type="date" id="dateEnd">
           </div>
-          <div class="field date-range-group">
-            <label>最后操作时间</label>
-            <div class="date-range-picker-input">
-              <input type="date" id="operateDateStart">
-              <span class="range-separator">至</span>
-              <input type="date" id="operateDateEnd">
-            </div>
-          </div>
-          <div class="btn-row">
-            <button class="btn primary" id="searchBtn">查询</button>
-            <button class="btn" id="resetBtn">重置</button>
-            <button class="btn" id="exportLogBtn">⬇ 导出日志</button>
-          </div>
+        </div>
+        <div></div>
+        <!-- 第三行 -->
+        <div></div>
+        <div></div>
+        <div class="btn-row">
+          <button class="btn primary" id="searchBtn">查询</button>
+          <button class="btn" id="resetBtn">重置</button>
+          <button class="btn" id="exportLogBtn">⬇ 导出日志</button>
         </div>
       </div>
     </section>
