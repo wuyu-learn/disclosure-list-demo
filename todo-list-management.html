@@ -310,6 +310,21 @@
       justify-self: end;
       align-self: center;
     }
+    .btn-row-checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: auto;       /* 推到左侧,其余按钮靠右 */
+      font-size: 14px;          /* 与 .btn 字号一致 */
+      color: #4b5563;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .btn-row-checkbox input[type="checkbox"] {
+      margin: 0;
+      cursor: pointer;
+    }
     .btn {
       min-height: 34px;
       border: 1px solid var(--biz-line);
@@ -1174,6 +1189,10 @@
         <div></div>
         <div></div>
         <div class="btn-row">
+          <label class="btn-row-checkbox" id="searchIncludeControlLabel" title="勾选后,查询时筛选项包含空公告日期的任务">
+            <input type="checkbox" id="searchIncludeControl" checked>
+            <span>查询公告日期包含空值</span>
+          </label>
           <button class="btn primary" id="searchBtn">查询</button>
           <button class="btn" id="resetBtn">重置</button>
           <button class="btn" id="exportLogBtn">⬇ 导出日志</button>
@@ -1598,8 +1617,8 @@
         state.currentPage = 1;     // 新一轮筛选回到首页
         render();
       }
-      els.deadlineMin.addEventListener("keydown", function(e) { if (e.key === 'Enter') commitDeadlineRange(); });
-      els.deadlineMax.addEventListener("keydown", function(e) { if (e.key === 'Enter') commitDeadlineRange(); });
+      if (els.deadlineMin) els.deadlineMin.addEventListener("keydown", function(e) { if (e.key === 'Enter') commitDeadlineRange(); });
+      if (els.deadlineMax) els.deadlineMax.addEventListener("keydown", function(e) { if (e.key === 'Enter') commitDeadlineRange(); });
       els.checkAll.addEventListener("change", toggleAll);
       document.getElementById("batchDelete").addEventListener("click", () => confirmDelete([...state.selectedIds]));
       document.getElementById("batchStart").addEventListener("click", function() {
@@ -1808,19 +1827,14 @@
       applyStatusDependentVisibility();   // ⭐ 新增:天数筛选框 + 剩余天数列联动
     }
 
-    // ⭐ 状态联动可见性:仅"待办"Tab 显示天数筛选下拉 + 「剩余天数」列
-    //   切换到"已发起"/"已失效"时,天数筛选值清空,避免数据被误过滤
+    // ⭐ 状态联动可见性:
+    //   - 待办(pending,editing)Tab 显示「剩余天数」列
+    //   - 已发起(submitted)/已失效(expired)Tab 隐藏「剩余天数」列
     function applyStatusDependentVisibility() {
-      // 1. 筛选框万年长青:绝不隐藏,绝不抹除用户输入
-      var filterWrap = document.getElementById('deadline-filter-wrapper');
-      if (filterWrap) {
-        filterWrap.style.display = '';
-      }
-
-      // 2. 剩余天数列全 Tab 可见:绝不设 display=none
+      var showDeadline = (state.activeStatus === 'pending,editing');
       var cols = document.querySelectorAll('.col-deadline');
       cols.forEach(function(el) {
-        el.style.display = '';
+        el.style.display = showDeadline ? '' : 'none';
       });
     }
 
