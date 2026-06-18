@@ -383,7 +383,7 @@
       gap: 8px;
     }
     .todo-widget-more {
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 500;
       color: #8c8c8c;
       text-decoration: none;
@@ -435,7 +435,7 @@
     .todo-widget-list-body {
       flex: 1;
       overflow-y: auto;
-      padding: 0 12px 8px;
+      padding: 0 4px 8px;
       min-height: 0;
     }
     /* scrollbar — 极细、低调 */
@@ -450,7 +450,7 @@
     .todo-widget-pagination {
       display: flex;
       align-items: center;
-      justify-content: flex-end;  /* 右对齐,卡片风 */
+      justify-content: center;  /* 居中,整体作为分页区呈现 */
       gap: 6px;
       height: 28px;
       padding: 0 12px;
@@ -543,9 +543,93 @@
       box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.12);
     }
 
+    /* ===== 每页条数选择器(向上弹出的轻量下拉) ===== */
+    .todo-page-size {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .todo-page-size-trigger {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 24px;
+      padding: 0 8px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      background: #fff;
+      color: #333;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      font-feature-settings: "tnum";
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .todo-page-size-trigger:hover {
+      border-color: #1677ff;
+      color: #1677ff;
+    }
+    .todo-page-size.is-open .todo-page-size-trigger {
+      border-color: #1677ff;
+      color: #1677ff;
+    }
+    .todo-page-size-caret {
+      width: 8px;
+      height: 8px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      transition: transform 0.15s;
+      margin-top: -2px;
+    }
+    .todo-page-size.is-open .todo-page-size-caret {
+      transform: rotate(-135deg);
+      margin-top: 3px;
+    }
+    .todo-page-size-menu {
+      position: fixed;  /* 脱离父级 overflow:hidden,坐标由 JS 打开时计算 */
+      min-width: 120px;
+      padding: 4px 0;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      display: none;
+      z-index: 9999;
+    }
+    .todo-page-size.is-open .todo-page-size-menu {
+      display: block;
+    }
+    .todo-page-size-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+      line-height: 1.4;
+      transition: background-color 0.12s, color 0.12s;
+      font-feature-settings: "tnum";
+    }
+    .todo-page-size-option:hover {
+      background: #f5f7fa;
+    }
+    .todo-page-size-option.active {
+      color: #1677ff;
+      font-weight: 600;
+    }
+    .todo-page-size-option.active::after {
+      content: '✓';
+      font-size: 12px;
+      color: #1677ff;
+    }
+
     /* ─── 行样式基础态 ─── */
     .todo-task-item {
-      padding: 12px 4px 12px 10px;
+      padding: 12px 4px 12px 6px;
       margin-bottom: 0;
       background: transparent;
       border: none;
@@ -1934,6 +2018,17 @@
         </div>
         <div class="todo-widget-list-body" id="todo-widget-list"></div>
         <div class="todo-widget-pagination">
+          <div class="todo-page-size" id="todoPageSize">
+            <button type="button" class="todo-page-size-trigger" id="todoPageSizeTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span id="todoPageSizeLabel">10 条/页</span>
+              <span class="todo-page-size-caret" aria-hidden="true"></span>
+            </button>
+            <div class="todo-page-size-menu" id="todoPageSizeMenu" role="listbox" aria-label="每页条数">
+              <div class="todo-page-size-option" role="option" data-size="5">5 条/页</div>
+              <div class="todo-page-size-option active" role="option" data-size="10">10 条/页</div>
+              <div class="todo-page-size-option" role="option" data-size="20">20 条/页</div>
+            </div>
+          </div>
           <span class="todo-page-nav is-disabled" id="todoPagePrev" title="上一页">‹</span>
           <div class="todo-page-list" id="todoPageList" aria-label="页码"></div>
           <span class="todo-page-nav is-disabled" id="todoPageNext" title="下一页">›</span>
@@ -3153,7 +3248,7 @@
 
     function computeTimeText(noticeDate, today) {
       var d = diffDays(noticeDate, today);
-      if (d === null) return '日期待定';
+      if (d === null) return '剩 - 天';
       if (d < 0) return '已逾期 ' + Math.abs(d) + ' 天';
       if (d === 0) return '今日';
       if (d <= 3) return '剩 ' + d + ' 天';
@@ -3179,7 +3274,7 @@
     }
 
     /* 分页状态：current 当前页(从 1 开始),size 每页条数,totalPages 总页数 */
-    var todoPagination = { current: 1, size: 5, totalPages: 1 };
+    var todoPagination = { current: 1, size: 10, totalPages: 1 };
 
     function getTodoPageItems(current, total) {
       if (total <= 7) {
@@ -3278,6 +3373,60 @@
           refreshTodoCard();
         });
       }
+
+      /* 每页条数选择器：点击触发开/关、选择切换、外部点击/Esc 关闭 */
+      var sizeWrap = document.getElementById('todoPageSize');
+      var sizeTrigger = document.getElementById('todoPageSizeTrigger');
+      var sizeMenu = document.getElementById('todoPageSizeMenu');
+      var sizeLabel = document.getElementById('todoPageSizeLabel');
+      if (sizeWrap && sizeTrigger && sizeMenu) {
+        var closeSizeMenu = function() {
+          sizeWrap.classList.remove('is-open');
+          sizeTrigger.setAttribute('aria-expanded', 'false');
+        };
+        var openSizeMenu = function() {
+          /* fixed 定位:基于触发按钮的视口坐标计算菜单位置 */
+          var rect = sizeTrigger.getBoundingClientRect();
+          sizeMenu.style.top = (rect.bottom + 4) + 'px';
+          sizeMenu.style.left = rect.left + 'px';
+          sizeWrap.classList.add('is-open');
+          sizeTrigger.setAttribute('aria-expanded', 'true');
+        };
+        sizeTrigger.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (sizeWrap.classList.contains('is-open')) {
+            closeSizeMenu();
+          } else {
+            openSizeMenu();
+          }
+        });
+        sizeMenu.addEventListener('click', function(e) {
+          var opt = e.target.closest('.todo-page-size-option');
+          if (!opt) return;
+          var nextSize = Number(opt.dataset.size);
+          if (!Number.isInteger(nextSize) || nextSize <= 0) return;
+          /* 切换后:更新选中态、回到第 1 页、重新渲染 */
+          Array.prototype.forEach.call(
+            sizeMenu.querySelectorAll('.todo-page-size-option'),
+            function(el) { el.classList.toggle('active', Number(el.dataset.size) === nextSize); }
+          );
+          if (sizeLabel) sizeLabel.textContent = nextSize + ' 条/页';
+          todoPagination.size = nextSize;
+          todoPagination.current = 1;
+          closeSizeMenu();
+          refreshTodoCard();
+        });
+        document.addEventListener('click', function(e) {
+          if (!sizeWrap.classList.contains('is-open')) return;
+          if (sizeWrap.contains(e.target)) return;
+          closeSizeMenu();
+        });
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && sizeWrap.classList.contains('is-open')) {
+            closeSizeMenu();
+          }
+        });
+      }
     }
 
     function refreshTodoCard() {
@@ -3306,7 +3455,7 @@
         .map(function(task) { return mapToCardView(task, today); });
 
       elAll.innerText = views.length;
-      elExpire.innerText = views.filter(function(v) { return v.d === 0; }).length;
+      elExpire.innerText = views.filter(function(v) { return v.d === 1; }).length;
 
       /* 分页切分：超出 1 页时启用 */
       todoPagination.totalPages = Math.max(1, Math.ceil(views.length / todoPagination.size));
