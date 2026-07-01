@@ -644,7 +644,7 @@
     .table-wrap { overflow: auto; }
     table {
       width: 100%;
-      min-width: 1460px;          /* ⭐ 删待办事项列后收紧 100px,12 列紧凑布局 */
+      min-width: 1360px;          /* ⭐ 删任务状态列后收紧 100px,11 列紧凑布局 */
       border-collapse: collapse;
     }
     th, td {
@@ -1254,6 +1254,7 @@
           <button class="btn primary" id="searchBtn">查询</button>
           <button class="btn" id="resetBtn">重置</button>
           <button class="btn" id="exportLogBtn">⬇ 导出日志</button>
+          <button class="btn" id="exportListBtn">⬇ 导出列表</button>
         </div>
       </div>
     </section>
@@ -1286,7 +1287,6 @@
               <th class="col-code">基金代码</th>
               <th class="col-fund-full">基金全称</th>
               <th>基金简称</th>
-              <th>任务状态</th>
               <th>任务创建时间</th>
               <th class="col-deadline">剩余天数</th>
               <th>公告日期</th>
@@ -1763,8 +1763,24 @@
           currentTabScope: currentTab
         };
 
-        showToast('正在根据当前筛选条件生成操作日志报表，请稍候...');
+        showToast('正在根据当前筛选条件下载操作日志报表，请稍候...');
         console.log('🚀 全局一键导出成功！最终审计参数：', exportParams);
+      });
+
+      // ===== 导出列表:读取筛选区,导出当前任务列表 =====
+      document.getElementById('exportListBtn').addEventListener('click', function() {
+        var bulletinType   = els.typeFilter.value || '';
+        var keyword        = els.keywordFilter.value.trim() || '';
+        var currentTab     = state.activeStatus;
+
+        var exportParams = {
+          bulletinType: bulletinType || '全部',
+          keyword: keyword,
+          currentTabScope: currentTab
+        };
+
+        showToast('正在根据当前筛选条件下载任务列表，请稍候...');
+        console.log('🚀 任务列表导出成功！导出参数：', exportParams);
       });
 
       document.getElementById("closeLogDrawer").addEventListener("click", closeLogDrawer);
@@ -2001,7 +2017,6 @@
           <td class="col-code" title="${task.fundCode}">${displayCode}</td>
           <td class="col-fund-full" title="${task.fundFullName}">${task.fundFullName}</td>
           <td class="col-fund-short" title="${task.fundShortName}">${displayShort}</td>
-          <td>${statusTag(task.status, state.activeStatus === 'pending,editing' ? 'todo' : 'normal')}</td>
           <td>${task.generatedAt}</td>
           <td class="col-deadline">${state.activeStatus === 'pending,editing' ? deadlineTag(task.noticeDate) : '<span style="color: #ccc;">--</span>'}</td>
           <td>${task.noticeDate}</td>
@@ -2033,23 +2048,6 @@
       els.rows.querySelectorAll("[data-start]").forEach(btn => btn.addEventListener("click", () => startTaskWithConfirm(btn.dataset.start)));
       els.rows.querySelectorAll("[data-delete]").forEach(btn => btn.addEventListener("click", () => confirmDelete([btn.dataset.delete])));
       els.rows.querySelectorAll("[data-log]").forEach(btn => btn.addEventListener("click", () => openLogDrawer(btn.dataset.log)));
-    }
-
-    // ⭐ 状态徽标:底层英文 code → 界面中文 + 金黄/绿/青/红 Tag 样式
-    function statusTag(status, mode) {
-      // ⭐ mode = 'todo' 时(「待办」Tab 下),把 pending / editing 合并显示为「待办」(gold)
-      //   其他 Tab 下保持原 statusTag 行为不变
-      if (mode === 'todo' && (status === 'pending' || status === 'editing')) {
-        return `<span class="tag gold">待办</span>`;
-      }
-      const map = {
-        pending:   { cls: "gold",  text: "待处理" },
-        editing:     { cls: "green", text: "编辑中" },
-        submitted: { cls: "cyan",  text: "已发起" },
-        expired:   { cls: "red",   text: "已失效" }
-      };
-      const entry = map[status] || { cls: "gray", text: status };
-      return `<span class="tag ${entry.cls}">${entry.text}</span>`;
     }
 
     function deadlineTag(noticeDate) {
