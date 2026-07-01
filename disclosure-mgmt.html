@@ -629,7 +629,7 @@
 
     /* ─── 行样式基础态 ─── */
     .todo-task-item {
-      padding: 12px 4px 12px 6px;
+      padding: 9px 4px 9px 6px;
       margin-bottom: 0;
       background: transparent;
       border: none;
@@ -638,7 +638,7 @@
       border-radius: 0;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 3px;
       position: relative;
       box-shadow: none;
       cursor: default;
@@ -672,19 +672,19 @@
       display: flex;
       align-items: center;
     }
-    /* top-line：徽章 + 名称 同一行,名称取剩余空间后单行截断 */
-    .todo-task-top-line { gap: 6px; }
-    /* bottom-line：创建时间 + 时效胶囊 两端对齐 */
-    .todo-task-bottom-line { justify-content: space-between; }
+    /* top-line：公告类型 + 创建时间 组成轻量元信息行，间距紧凑 */
+    .todo-task-top-line { gap: 4px; }
+    /* bottom-line：基金简称 + 时效胶囊 两端对齐 */
+    .todo-task-bottom-line { justify-content: space-between; margin-top: 0; }
 
-    /* ─── 类型徽章：扁平莫兰迪蓝，无边框 ─── */
+    /* ─── 类型徽章：复用 .tag.gray 色系但降低存在感，作为元信息标签 ─── */
     .todo-task-badge {
       font-size: 10.5px;
-      font-weight: 500;
-      padding: 2px 7px;
+      font-weight: 400;
+      padding: 1px 5px;
       border-radius: 3px;
-      background: #f0f5ff;
-      color: #3b72d4;
+      background: #eef2f6;
+      color: #6b7280;
       border: none;
       letter-spacing: 0.15px;
       max-width: 210px;
@@ -699,11 +699,11 @@
       color: #cf1322;
     }
 
-    /* ─── 基金名称：与徽章同行,不加粗,单行截断 ─── */
+    /* ─── 基金简称：第二行主体，字号保持 10.5px，通过字重/颜色提升识别度 ─── */
     .todo-task-name {
-      font-size: 13px;
-      font-weight: 400;
-      color: #1a202c;
+      font-size: 10.5px;
+      font-weight: 500;
+      color: #1f2937;
       flex: 1;
       min-width: 0;
       white-space: nowrap;
@@ -713,37 +713,39 @@
       letter-spacing: 0.1px;
     }
 
-    /* ─── 底部信息行 ─── */
-    .todo-task-bottom-line { margin-top: 0; }
+    /* ─── 创建时间：仅展示日期，进一步弱化（最小字号、最浅灰），作为元信息陪衬 ─── */
     .todo-task-create-time {
-      font-size: 11.5px;
+      font-size: 10px;
       font-weight: 400;
-      color: #b0b8c4;  /* 最浅，三层阶梯底端 */
+      color: #9ca3af;
       letter-spacing: 0.1px;
+      white-space: nowrap;
     }
 
-    /* ─── 时效胶囊：小巧清透 ─── */
+    /* ─── 时效状态标签：轻量 Tag 风格，复用项目 .tag.red/.tag.amber/.tag.gray 配色，降低饱和度 ─── */
     .todo-task-time {
-      font-size: 11.5px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 400;
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      padding: 2px 7px;
-      border-radius: 5px;
+      padding: 1px 5px;
+      border-radius: 3px;
       letter-spacing: 0.1px;
+      background: #eef2f6;
+      color: #6b7280;
     }
     .todo-task-time.alert {
-      color: #dc2626;
-      background: rgba(220, 38, 38, 0.10); /* 高危行对应胶囊微加深 */
+      background: #fee7e2;
+      color: #b42318;
     }
     .todo-task-time.amber {
-      color: #b45309;
-      background: rgba(180, 83, 9, 0.07);
+      background: #fff4d6;
+      color: #a16207;
     }
     .todo-task-time.muted {
-      color: #9ca3af;
-      background: rgba(156, 163, 175, 0.08);
+      background: #eef2f6;
+      color: #6b7280;
     }
 
     /* ─── 空态 ─── */
@@ -3263,7 +3265,7 @@
       return {
         id: task.id,
         type: task.type,
-        title: task.fundFullName,
+        title: task.fundShortName,
         noticeDate: task.noticeDate,
         timeText: computeTimeText(task.noticeDate, today),
         isExpire: !!task.expireToday,
@@ -3481,12 +3483,12 @@
         row.innerHTML = [
           '<div class="todo-task-top-line">',
           '  <span class="todo-task-badge">' + escapeHtml(item.type) + '</span>',
-          '  <span class="todo-task-name" title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</span>',
+          '  <span class="todo-task-create-time">' + escapeHtml(item.createTime) + '</span>',
           '</div>',
           '<div class="todo-task-bottom-line">',
-          '  <span class="todo-task-create-time">创建 ' + escapeHtml(item.createTime) + '</span>',
+          '  <span class="todo-task-name" title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</span>',
           '  <span class="todo-task-time ' + item.timeClass + '">',
-          '    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;opacity:.7"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+          '    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1.5px;opacity:.6"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
           '    ' + escapeHtml(item.timeText),
           '  </span>',
           '</div>'
