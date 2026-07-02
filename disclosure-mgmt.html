@@ -674,17 +674,17 @@
     }
     /* top-line：公告类型 + 时效，作为首要决策信息 */
     .todo-task-top-line { justify-content: space-between; gap: 8px; min-width: 0; }
-    /* bottom-line：基金简称 + 创建时间，作为辅助上下文 */
+    /* bottom-line：基金简称 + 剩余天数，作为辅助上下文 */
     .todo-task-bottom-line { justify-content: space-between; gap: 6px; margin-top: 0; }
 
-    /* ─── 公告类型：作为任务主标题，去掉大面积底色，提升可读性 ─── */
+    /* ─── 公告类型：标签样式展示，突出任务类型 ─── */
     .todo-task-badge {
       font-size: 11px;
       font-weight: 500;
-      padding: 0;
-      border-radius: 0;
-      background: transparent;
-      color: #253447;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
       border: none;
       letter-spacing: 0;
       max-width: 218px;
@@ -694,20 +694,20 @@
       flex: 0 1 auto;
       min-width: 0;
     }
-    /* 高危行徽章：暖红色系，同样无边框 */
+    /* 高危行徽章：暖红色系标签 */
     .todo-task-item.is-expire .todo-task-badge {
-      background: transparent;
+      background: #fee7e2;
       color: #b42318;
     }
 
-    /* ─── 基金简称：辅助标签，收窄展示以节省空间 ─── */
+    /* ─── 基金简称：普通文本样式展示 ─── */
     .todo-task-name {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 400;
       color: #6b7280;
-      background: #f6f8fb;
-      border-radius: 3px;
-      padding: 1px 5px;
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
       flex: 0 1 auto;
       max-width: 218px;
       min-width: 0;
@@ -718,7 +718,7 @@
       letter-spacing: 0;
     }
 
-    /* ─── 创建时间：带文字标识，作为右侧弱元信息 ─── */
+    /* ─── 创建时间：带文字标识，作为 top-line 右侧弱元信息 ─── */
     .todo-task-create-time {
       font-size: 10px;
       font-weight: 400;
@@ -3491,14 +3491,14 @@
         row.innerHTML = [
           '<div class="todo-task-top-line">',
           '  <span class="todo-task-badge">' + escapeHtml(item.type) + '</span>',
+          '  <span class="todo-task-create-time">创建 ' + escapeHtml(item.createTime) + '</span>',
+          '</div>',
+          '<div class="todo-task-bottom-line">',
+          '  <span class="todo-task-name" title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</span>',
           '  <span class="todo-task-time ' + item.timeClass + '">',
           '    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1.5px;opacity:.6"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
           '    ' + escapeHtml(item.timeText),
           '  </span>',
-          '</div>',
-          '<div class="todo-task-bottom-line">',
-          '  <span class="todo-task-name" title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</span>',
-          '  <span class="todo-task-create-time">创建 ' + escapeHtml(item.createTime) + '</span>',
           '</div>'
         ].join('');
         container.appendChild(row);
